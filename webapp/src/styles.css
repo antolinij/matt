@@ -1,0 +1,123 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+:root {
+  --bg: #f4f6f0;
+  --surface: #ffffffcc;
+  --text: #102519;
+  --accent: #0f9d58;
+  --accent-2: #0a6f43;
+  --error: #b42318;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 10% 10%, #c6f4d6 0%, transparent 40%),
+    radial-gradient(circle at 90% 20%, #e3f1ff 0%, transparent 35%),
+    var(--bg);
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+  display: grid;
+  gap: 1rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3.4vw, 2.4rem);
+}
+
+header p {
+  margin: 0.4rem 0 0;
+}
+
+code, pre {
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.card {
+  background: var(--surface);
+  backdrop-filter: blur(4px);
+  border: 1px solid #d4e3d8;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.card h2 {
+  margin-top: 0;
+}
+
+form {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+input, select, button {
+  padding: 0.65rem 0.7rem;
+  border: 1px solid #b8cbbd;
+  border-radius: 10px;
+  font: inherit;
+}
+
+button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+button:hover {
+  background: var(--accent-2);
+  transform: translateY(-1px);
+}
+
+pre {
+  margin: 0.8rem 0 0;
+  padding: 0.7rem;
+  border-radius: 10px;
+  border: 1px solid #dce9df;
+  background: #fcfffd;
+  max-height: 240px;
+  overflow: auto;
+  font-size: 0.82rem;
+}
+
+.banner {
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  font-weight: 600;
+}
+
+.banner.ok {
+  background: #dafce7;
+  border: 1px solid #91d8ae;
+}
+
+.banner.err {
+  background: #fee4e2;
+  border: 1px solid #f3b4b0;
+  color: var(--error);
+}
+
+.status-grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+}
