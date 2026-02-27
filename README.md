@@ -1,5 +1,3 @@
-<img width="1911" height="781" alt="Screenshot 2026-02-27 at 17 23 30" src="https://github.com/user-attachments/assets/a8aeea1c-dacc-4583-bb4a-f04e3506489b" /># FP2P - Full Project Playbook (Mattilda)
-
 ## 1) What This Project Is
 
 Mattilda is a FastAPI backend + React frontend system for:
@@ -759,15 +757,15 @@ sequenceDiagram
 
 ## 21) Screenshots
 
-Graphana 
+### Graphana 
 Running in localhost:3001
 <img width="1911" height="781" alt="Screenshot 2026-02-27 at 17 23 30" src="https://github.com/user-attachments/assets/74c983bb-67f4-4472-8c7b-de529c672596" />
 
-Swager Docs 
+### Swager Docs 
 Running in localhost:8000/docs
 <img width="1808" height="939" alt="Screenshot 2026-02-27 at 17 25 25" src="https://github.com/user-attachments/assets/cf51331e-a93c-4f2a-855c-4c468a61f909" />
 
-Frontend
+### Frontend
 Running in localhost:3000
 
 You can use this user: 
