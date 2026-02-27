@@ -1,5 +1,3 @@
-# FP2P - Full Project Playbook (Mattilda)
-
 ## 1) What This Project Is
 
 Mattilda is a FastAPI backend + React frontend system for:
@@ -744,7 +742,64 @@ sequenceDiagram
 
 ---
 
-## 20) Reference Files
+## 20 First Time Setup
+
+```bash
+# 1. Create .env file from template
+make env
+
+# 2. Edit .env file with your configuration
+# nano .env  # or use your preferred editor
+
+# 3. Build Docker images
+make build
+
+# 4. Start all services
+make up
+
+# 5. Run database migrations
+make migrate
+
+# 6. (Optional) Seed database with sample data
+make seed
+```
+
+**One command setup** (after .env is configured):
+```bash
+make setup  # Runs: env + build + up + migrate
+```
+
+## Daily Development
+
+### Starting/Stopping
+
+```bash
+make up          # Start all services (API, DB, Redis, Worker)
+make down        # Stop all services
+make restart     # Restart all services
+make logs        # View all logs (follow mode)
+make ps          # Show running containers
+```
+
+### Development Workflow
+
+```bash
+# Run tests
+make test        # Run all tests
+make test-cov    # Run tests with coverage report
+
+# Code quality
+make format      # Format code with black & isort
+make lint        # Lint code with flake8 & mypy
+make check       # Run format + lint + test
+
+# Access shells
+make shell       # Bash shell in app container
+make db-shell    # Interactive Python database shell
+make shell-db    # PostgreSQL shell
+```
+
+## 21) Reference Files
 
 - API app: `app/main.py`
 - Routes: `app/api/routes/`
@@ -756,3 +811,23 @@ sequenceDiagram
 - Compose: `docker-compose.yml`
 - Make commands: `Makefile`
 - Tests: `tests/`
+
+## 22) Screenshots
+
+### Graphana 
+Running in localhost:3001
+<img width="1911" height="781" alt="Screenshot 2026-02-27 at 17 23 30" src="https://github.com/user-attachments/assets/74c983bb-67f4-4472-8c7b-de529c672596" />
+
+### Swager Docs 
+Running in localhost:8000/docs
+<img width="1808" height="939" alt="Screenshot 2026-02-27 at 17 25 25" src="https://github.com/user-attachments/assets/cf51331e-a93c-4f2a-855c-4c468a61f909" />
+
+### Frontend
+Running in localhost:3000
+
+You can use this user: 
+test/password123
+<img width="1533" height="710" alt="Screenshot 2026-02-27 at 17 26 17" src="https://github.com/user-attachments/assets/7767e7a0-f61c-4005-ab34-5ca4beb51379" />
+
+<img width="1597" height="907" alt="Screenshot 2026-02-27 at 17 26 32" src="https://github.com/user-attachments/assets/03d37365-d796-48b5-9858-cc942c688b0e" />
+

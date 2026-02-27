@@ -1,0 +1,42 @@
+groups:
+  - name: mattilda-alerts
+    rules:
+      - alert: MattildaBackendDown
+        expr: up{job="backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Mattilda backend is down"
+          description: "Prometheus cannot scrape backend /metrics for 2 minutes."
+
+      - alert: MattildaHigh5xxErrorRate
+        expr: |
+          (
+            sum(rate(mattilda_http_requests_total{job="backend",status=~"5.."}[5m]))
+            /
+            sum(rate(mattilda_http_requests_total{job="backend"}[5m]))
+          ) > 0.02
+          and
+          sum(rate(mattilda_http_requests_total{job="backend"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High backend 5xx error rate"
+          description: "5xx error ratio is above 2% for at least 5 minutes."
+
+      - alert: MattildaHighP95Latency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (
+              rate(mattilda_http_request_duration_seconds_bucket{job="backend"}[10m])
+            )
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High backend p95 latency"
+          description: "p95 latency is above 500ms for 10 minutes."
