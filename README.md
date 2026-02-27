@@ -1,4 +1,4 @@
-# FP2P - Full Project Playbook (Mattilda)
+<img width="1911" height="781" alt="Screenshot 2026-02-27 at 17 23 30" src="https://github.com/user-attachments/assets/a8aeea1c-dacc-4583-bb4a-f04e3506489b" /># FP2P - Full Project Playbook (Mattilda)
 
 ## 1) What This Project Is
 
@@ -756,3 +756,23 @@ sequenceDiagram
 - Compose: `docker-compose.yml`
 - Make commands: `Makefile`
 - Tests: `tests/`
+
+## 21) Screenshots
+
+Graphana 
+Running in localhost:3001
+<img width="1911" height="781" alt="Screenshot 2026-02-27 at 17 23 30" src="https://github.com/user-attachments/assets/74c983bb-67f4-4472-8c7b-de529c672596" />
+
+Swager Docs 
+Running in localhost:8000/docs
+<img width="1808" height="939" alt="Screenshot 2026-02-27 at 17 25 25" src="https://github.com/user-attachments/assets/cf51331e-a93c-4f2a-855c-4c468a61f909" />
+
+Frontend
+Running in localhost:3000
+
+You can use this user: 
+test/password123
+<img width="1533" height="710" alt="Screenshot 2026-02-27 at 17 26 17" src="https://github.com/user-attachments/assets/7767e7a0-f61c-4005-ab34-5ca4beb51379" />
+
+<img width="1597" height="907" alt="Screenshot 2026-02-27 at 17 26 32" src="https://github.com/user-attachments/assets/03d37365-d796-48b5-9858-cc942c688b0e" />
+
