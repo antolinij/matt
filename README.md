@@ -742,7 +742,64 @@ sequenceDiagram
 
 ---
 
-## 20) Reference Files
+## 20 First Time Setup
+
+```bash
+# 1. Create .env file from template
+make env
+
+# 2. Edit .env file with your configuration
+# nano .env  # or use your preferred editor
+
+# 3. Build Docker images
+make build
+
+# 4. Start all services
+make up
+
+# 5. Run database migrations
+make migrate
+
+# 6. (Optional) Seed database with sample data
+make seed
+```
+
+**One command setup** (after .env is configured):
+```bash
+make setup  # Runs: env + build + up + migrate
+```
+
+## Daily Development
+
+### Starting/Stopping
+
+```bash
+make up          # Start all services (API, DB, Redis, Worker)
+make down        # Stop all services
+make restart     # Restart all services
+make logs        # View all logs (follow mode)
+make ps          # Show running containers
+```
+
+### Development Workflow
+
+```bash
+# Run tests
+make test        # Run all tests
+make test-cov    # Run tests with coverage report
+
+# Code quality
+make format      # Format code with black & isort
+make lint        # Lint code with flake8 & mypy
+make check       # Run format + lint + test
+
+# Access shells
+make shell       # Bash shell in app container
+make db-shell    # Interactive Python database shell
+make shell-db    # PostgreSQL shell
+```
+
+## 21) Reference Files
 
 - API app: `app/main.py`
 - Routes: `app/api/routes/`
@@ -755,7 +812,7 @@ sequenceDiagram
 - Make commands: `Makefile`
 - Tests: `tests/`
 
-## 21) Screenshots
+## 22) Screenshots
 
 ### Graphana 
 Running in localhost:3001
