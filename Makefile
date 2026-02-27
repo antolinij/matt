@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs shell shell-db test test-cov clean install migrate migrate-create migrate-down migrate-history format lint check run dev db-reset db-backup db-restore prune worker-logs worker-restart redis-cli redis-monitor redis-stats
+.PHONY: help build up down restart logs shell shell-db test test-cov clean install install-dev migrate migrate-create migrate-down migrate-history format format-check lint type-check security safety-check lint-all check check-all run dev db-reset db-backup db-restore prune worker-logs worker-restart redis-cli redis-monitor redis-stats pre-commit-install pre-commit-run pre-commit-update webapp-install webapp-lint webapp-lint-fix webapp-format webapp-format-check webapp-check quality-report
 
 # Default target
 .DEFAULT_GOAL := help
@@ -213,21 +213,111 @@ test-watch: ## Run tests in watch mode (requires pytest-watch)
 	@echo "$(BLUE)Running tests in watch mode...$(NC)"
 	ptw -- -v
 
-##@ Code Quality
+##@ Code Quality (Backend)
 
-format: ## Format code with black and isort
-	@echo "$(BLUE)Formatting code...$(NC)"
-	black app tests
-	isort app tests
-	@echo "$(GREEN)Code formatted!$(NC)"
+install-dev: ## Install development dependencies
+	@echo "$(BLUE)Installing development dependencies...$(NC)"
+	$(PIP) install -r requirements-dev.txt
+	@echo "$(GREEN)Development dependencies installed!$(NC)"
 
-lint: ## Lint code with flake8 and mypy
-	@echo "$(BLUE)Linting code...$(NC)"
-	flake8 app tests
+format: ## Format Python code with black and isort
+	@echo "$(BLUE)Formatting Python code...$(NC)"
+	black app tests scripts
+	isort app tests scripts
+	@echo "$(GREEN)Python code formatted!$(NC)"
+
+format-check: ## Check Python code formatting without making changes
+	@echo "$(BLUE)Checking Python code formatting...$(NC)"
+	black --check app tests scripts
+	isort --check-only app tests scripts
+
+lint: ## Lint Python code with flake8
+	@echo "$(BLUE)Linting Python code with flake8...$(NC)"
+	flake8 app tests scripts
+	@echo "$(GREEN)Flake8 linting completed!$(NC)"
+
+type-check: ## Type check Python code with mypy
+	@echo "$(BLUE)Type checking Python code...$(NC)"
 	mypy app
-	@echo "$(GREEN)Linting completed!$(NC)"
+	@echo "$(GREEN)Type checking completed!$(NC)"
 
-check: format lint test ## Run all checks (format, lint, test)
+security: ## Run security checks with bandit
+	@echo "$(BLUE)Running security checks...$(NC)"
+	bandit -r app -c pyproject.toml
+	@echo "$(GREEN)Security checks completed!$(NC)"
+
+safety-check: ## Check dependencies for known vulnerabilities
+	@echo "$(BLUE)Checking dependencies for vulnerabilities...$(NC)"
+	safety check --json
+	@echo "$(GREEN)Safety check completed!$(NC)"
+
+lint-all: lint type-check security ## Run all Python linting checks
+
+##@ Code Quality (Frontend)
+
+webapp-install: ## Install frontend dependencies
+	@echo "$(BLUE)Installing frontend dependencies...$(NC)"
+	cd webapp && npm install
+	@echo "$(GREEN)Frontend dependencies installed!$(NC)"
+
+webapp-lint: ## Lint frontend code with ESLint
+	@echo "$(BLUE)Linting frontend code...$(NC)"
+	cd webapp && npm run lint
+	@echo "$(GREEN)Frontend linting completed!$(NC)"
+
+webapp-lint-fix: ## Fix frontend linting issues automatically
+	@echo "$(BLUE)Fixing frontend linting issues...$(NC)"
+	cd webapp && npm run lint:fix
+	@echo "$(GREEN)Frontend linting fixed!$(NC)"
+
+webapp-format: ## Format frontend code with Prettier
+	@echo "$(BLUE)Formatting frontend code...$(NC)"
+	cd webapp && npm run format
+	@echo "$(GREEN)Frontend code formatted!$(NC)"
+
+webapp-format-check: ## Check frontend code formatting
+	@echo "$(BLUE)Checking frontend code formatting...$(NC)"
+	cd webapp && npm run format:check
+
+webapp-check: webapp-lint webapp-format-check ## Run all frontend checks
+
+##@ Code Quality (All)
+
+pre-commit-install: ## Install pre-commit git hooks
+	@echo "$(BLUE)Installing pre-commit hooks...$(NC)"
+	pre-commit install
+	@echo "$(GREEN)Pre-commit hooks installed!$(NC)"
+	@echo "Hooks will run automatically on git commit"
+
+pre-commit-run: ## Run pre-commit on all files
+	@echo "$(BLUE)Running pre-commit on all files...$(NC)"
+	pre-commit run --all-files
+
+pre-commit-update: ## Update pre-commit hooks to latest versions
+	@echo "$(BLUE)Updating pre-commit hooks...$(NC)"
+	pre-commit autoupdate
+	@echo "$(GREEN)Pre-commit hooks updated!$(NC)"
+
+check: format-check lint-all test ## Run all backend checks (format, lint, type-check, security, test)
+
+check-all: check webapp-check ## Run all checks for backend and frontend
+
+quality-report: ## Generate comprehensive quality report
+	@echo "$(BLUE)Generating quality report...$(NC)"
+	@echo "Running tests with coverage..."
+	@pytest --cov=app --cov-report=html --cov-report=term-missing
+	@echo ""
+	@echo "Running linters..."
+	@flake8 app tests scripts || true
+	@echo ""
+	@echo "Running type checker..."
+	@mypy app || true
+	@echo ""
+	@echo "Running security checks..."
+	@bandit -r app -c pyproject.toml || true
+	@echo ""
+	@echo "$(GREEN)Quality report completed!$(NC)"
+	@echo "Coverage report: htmlcov/index.html"
 
 ##@ Cleanup
 

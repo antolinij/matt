@@ -1,0 +1,37 @@
+# Development dependencies (not needed in production)
+# Install with: pip install -r requirements-dev.txt
+
+# Include production requirements
+-r requirements.txt
+
+# Code Coverage
+pytest-cov==4.1.0
+
+# Code Formatting
+black==24.2.0
+isort==5.13.2
+
+# Code Linting
+flake8==7.0.0
+flake8-docstrings==1.7.0  # Check docstring presence and style
+flake8-bugbear==24.2.6     # Find likely bugs and design problems
+flake8-comprehensions==3.14.0  # Better list/dict/set comprehensions
+flake8-simplify==0.21.0    # Suggest code simplifications
+
+# Type Checking
+mypy==1.8.0
+types-redis==4.6.0.20240106
+types-requests==2.31.0.20240106
+
+# Security
+bandit==1.7.7              # Security issue scanner
+safety==3.0.1              # Check dependencies for known vulnerabilities
+
+# Git Hooks
+pre-commit==3.6.2
+
+# Documentation
+interrogate==1.5.0         # Check docstring coverage
+
+# Debugging
+ipython==8.21.0           # Better REPL for debugging

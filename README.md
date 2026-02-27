@@ -485,44 +485,158 @@ Calculations:
 
 ## 15) Makefile Commands (Most Used)
 
-Core:
+### Core Commands
 
 ```bash
-make help
-make up
-make down
-make restart
-make logs
-make test
+make help              # Display all available commands with descriptions
+make setup             # One-command initial setup (env + build + up + migrate)
+make up                # Start all services (detached)
+make down              # Stop all services
+make restart           # Restart all services
+make logs              # View logs from all services
+make ps                # Show running containers
+make clean             # Remove Python cache files
+```
+
+### Development
+
+```bash
+make install           # Install Python dependencies locally
+make install-dev       # Install development dependencies (linters, formatters, etc.)
+make run               # Run app locally (without Docker)
+make dev               # Run app locally with debug mode
+```
+
+### Testing
+
+```bash
+make test              # Run all tests
 make test-cov          # Run tests with coverage report
-make migrate
-make migrate-create msg="description"
-make migrate-down
+make test-docker       # Run tests in Docker container
+make test-watch        # Run tests in watch mode (requires pytest-watch)
 ```
 
-Event + Redis:
+### Code Quality - Backend (Python)
 
 ```bash
-make redis-cli
-make redis-monitor
-make redis-stats
-make redis-queue
-make worker-status
-make worker-logs
+make format            # Format Python code with black and isort
+make format-check      # Check formatting without making changes
+make lint              # Lint Python code with flake8
+make type-check        # Type check Python code with mypy
+make security          # Run security checks with bandit
+make safety-check      # Check dependencies for vulnerabilities
+make lint-all          # Run all Python linting checks (lint + type-check + security)
+make check             # Run all backend checks (format-check + lint-all + test)
 ```
 
-DB ops:
+### Code Quality - Frontend (React)
 
 ```bash
-make shell-db
-make db-backup
-make db-restore file=backups/your_file.sql
+make webapp-install    # Install frontend dependencies
+make webapp-lint       # Lint frontend code with ESLint
+make webapp-lint-fix   # Fix frontend linting issues automatically
+make webapp-format     # Format frontend code with Prettier
+make webapp-format-check  # Check frontend code formatting
+make webapp-check      # Run all frontend checks (lint + format-check)
 ```
 
-Important Makefile caveat:
+### Code Quality - All
+
+```bash
+make check-all         # Run all checks for backend and frontend
+make pre-commit-install   # Install git hooks (auto-run linters on commit)
+make pre-commit-run    # Run pre-commit on all files manually
+make pre-commit-update # Update pre-commit hooks to latest versions
+make quality-report    # Generate comprehensive quality report
+```
+
+### Database Migrations
+
+```bash
+make migrate           # Run database migrations (upgrade to latest)
+make migrate-local     # Run migrations locally (without Docker)
+make migrate-create msg="description"  # Create a new migration
+make migrate-create-local msg="description"  # Create migration locally
+make migrate-down      # Rollback last migration
+make migrate-history   # Show migration history
+```
+
+### Database Operations
+
+```bash
+make shell-db          # Access PostgreSQL shell in database container
+make db-shell          # Access interactive Python database shell
+make db-shell-local    # Access interactive database shell locally
+make db-backup         # Backup database to file
+make db-restore file=backups/backup.sql  # Restore database from file
+make db-reset          # Reset database (WARNING: deletes all data)
+make seed              # Seed database with sample data
+make seed-local        # Seed database locally (without Docker)
+```
+
+### Event-Driven Accounting & Redis
+
+```bash
+make redis-cli         # Access Redis CLI
+make redis-monitor     # Monitor Redis commands in real-time
+make redis-stats       # Show Redis statistics
+make redis-queue       # Show current job queue length
+make worker-restart    # Restart the background worker
+make worker-logs       # View logs from worker service
+make worker-status     # Check worker container status
+make movements-recent  # Show recent account movements (last 10)
+make movements-summary # Show movement summary by type
+make snapshots-list    # List recent snapshots
+```
+
+### Container Access
+
+```bash
+make shell             # Access bash shell in app container
+make shell-python      # Access Python REPL in app container
+make stats             # Show container resource usage
+make health            # Check health of services
+make docs              # Open API documentation in browser
+```
+
+### Utilities
+
+```bash
+make env               # Copy .env.example to .env if not exists
+```
+
+### Common Workflows
+
+**Before committing code:**
+```bash
+make check-all         # Run all checks (backend + frontend)
+```
+
+**After pulling changes:**
+```bash
+make restart           # Restart services
+make migrate           # Run new migrations
+make test              # Ensure tests pass
+```
+
+**First-time contributor:**
+```bash
+make install-dev       # Install linting tools
+make pre-commit-install  # Install git hooks
+make check-all         # Verify everything works
+```
+
+### Documentation
+
+For detailed linting and code quality information, see:
+- **LINTING.md** - Complete guide for code quality tools
+- **FFF.MD** - Fast First Commands reference guide
+
+Important Makefile notes:
 
 - Some targets still use service name `web` while compose uses `backend`.
 - If a target fails, run equivalent direct command with `docker compose exec backend ...`.
+- Run `make help` to see all available commands with descriptions.
 
 ---
 
@@ -785,13 +899,25 @@ make ps          # Show running containers
 
 ```bash
 # Run tests
-make test        # Run all tests
-make test-cov    # Run tests with coverage report
+make test              # Run all tests
+make test-cov          # Run tests with coverage report
 
-# Code quality
-make format      # Format code with black & isort
-make lint        # Lint code with flake8 & mypy
-make check       # Run format + lint + test
+# Code quality - Backend
+make format            # Format Python code with black & isort
+make lint              # Lint Python code with flake8
+make type-check        # Type check with mypy
+make security          # Security scan with bandit
+make check             # Run all backend checks (format + lint + type-check + test)
+
+# Code quality - Frontend
+make webapp-lint       # Lint frontend with ESLint
+make webapp-format     # Format frontend with Prettier
+make webapp-check      # Run all frontend checks
+
+# Code quality - All
+make check-all         # Run all checks (backend + frontend)
+make pre-commit-install  # Install git hooks (run linters on commit)
+make quality-report    # Generate comprehensive quality report
 
 # Access shells
 make shell       # Bash shell in app container
@@ -799,8 +925,17 @@ make db-shell    # Interactive Python database shell
 make shell-db    # PostgreSQL shell
 ```
 
+**Recommended workflow before committing:**
+```bash
+make format            # Auto-format code
+make check-all         # Run all checks
+git add .
+git commit -m "your message"  # Pre-commit hooks will run automatically
+```
+
 ## 21) Reference Files
 
+**Code:**
 - API app: `app/main.py`
 - Routes: `app/api/routes/`
 - Services: `app/services/`
@@ -808,9 +943,21 @@ make shell-db    # PostgreSQL shell
 - Cache core: `app/core/cache.py`
 - Metrics core: `app/core/metrics.py`
 - Worker: `app/workers/account_worker.py`
+- Tests: `tests/`
+
+**Configuration:**
 - Compose: `docker-compose.yml`
 - Make commands: `Makefile`
-- Tests: `tests/`
+- Python linting: `pyproject.toml`, `setup.cfg`
+- Pre-commit hooks: `.pre-commit-config.yaml`
+- Frontend linting: `webapp/.eslintrc.json`, `webapp/.prettierrc`
+
+**Documentation:**
+- Main README: `README.md`
+- Code quality guide: `LINTING.md`
+- Quick reference: `FFF.MD`
+- Project playbook: `FP2P.MD`
+- Scripts documentation: `scripts/README.md`
 
 ## 22) Screenshots
 
