@@ -742,7 +742,7 @@ sequenceDiagram
 
 ---
 
-## 20 First Time Setup
+## 20) First Time Setup
 
 ```bash
 # 1. Create .env file from template
