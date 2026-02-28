@@ -76,3 +76,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Node.js / Frontend
+node_modules/
+webapp/dist/
+webapp/.vite/
+*.tsbuildinfo
