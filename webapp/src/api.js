@@ -31,7 +31,7 @@ async function refreshAccessToken() {
   const response = await fetch(`${BASE_URL}/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refresh_token: refreshToken })
+    body: JSON.stringify({ refresh_token: refreshToken }),
   });
 
   if (!response.ok) {
@@ -55,7 +55,7 @@ async function request(path, options = {}) {
 
   let response = await fetch(`${BASE_URL}${path}`, {
     headers,
-    ...options
+    ...options,
   });
 
   // Handle 401 - try to refresh token once
@@ -68,7 +68,7 @@ async function request(path, options = {}) {
       response = await fetch(`${BASE_URL}${path}`, {
         headers,
         ...options,
-        _retry: true
+        _retry: true,
       });
     } catch (err) {
       clearTokens();
@@ -103,7 +103,7 @@ export const api = {
     const response = await fetch(`${BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: formData
+      body: formData,
     });
 
     if (!response.ok) {
@@ -124,8 +124,8 @@ export const api = {
         username,
         email,
         password,
-        full_name: fullName
-      })
+        full_name: fullName,
+      }),
     });
 
     if (!response.ok) {
@@ -154,17 +154,20 @@ export const api = {
 
   // Students
   listStudents: () => request("/students"),
-  createStudent: (payload) => request("/students", { method: "POST", body: JSON.stringify(payload) }),
+  createStudent: (payload) =>
+    request("/students", { method: "POST", body: JSON.stringify(payload) }),
 
   // Invoices
   listInvoices: () => request("/invoices"),
-  createInvoice: (payload) => request("/invoices", { method: "POST", body: JSON.stringify(payload) }),
+  createInvoice: (payload) =>
+    request("/invoices", { method: "POST", body: JSON.stringify(payload) }),
 
   // Payments
   listPayments: () => request("/payments"),
-  createPayment: (payload) => request("/payments", { method: "POST", body: JSON.stringify(payload) }),
+  createPayment: (payload) =>
+    request("/payments", { method: "POST", body: JSON.stringify(payload) }),
 
   // Account Status
   getSchoolAccountStatus: (schoolId) => request(`/schools/${schoolId}/account-status`),
-  getStudentAccountStatus: (studentId) => request(`/students/${studentId}/account-status`)
+  getStudentAccountStatus: (studentId) => request(`/students/${studentId}/account-status`),
 };

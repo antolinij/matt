@@ -19,8 +19,7 @@ body {
   color: var(--text);
   background:
     radial-gradient(circle at 10% 10%, #c6f4d6 0%, transparent 40%),
-    radial-gradient(circle at 90% 20%, #e3f1ff 0%, transparent 35%),
-    var(--bg);
+    radial-gradient(circle at 90% 20%, #e3f1ff 0%, transparent 35%), var(--bg);
 }
 
 .page {
@@ -40,7 +39,8 @@ header p {
   margin: 0.4rem 0 0;
 }
 
-code, pre {
+code,
+pre {
   font-family: "IBM Plex Mono", monospace;
 }
 
@@ -62,7 +62,9 @@ form {
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
 
-input, select, button {
+input,
+select,
+button {
   padding: 0.65rem 0.7rem;
   border: 1px solid #b8cbbd;
   border-radius: 10px;
@@ -75,7 +77,9 @@ button {
   border: none;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 120ms ease, background 120ms ease;
+  transition:
+    transform 120ms ease,
+    background 120ms ease;
 }
 
 button:hover {

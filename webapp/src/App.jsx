@@ -21,7 +21,7 @@ export default function App() {
     username: "",
     password: "",
     email: "",
-    fullName: ""
+    fullName: "",
   });
 
   const [schools, setSchools] = useState([]);
@@ -31,9 +31,26 @@ export default function App() {
   const [status, setStatus] = useState(null);
 
   const [schoolForm, setSchoolForm] = useState({ name: "", email: "" });
-  const [studentForm, setStudentForm] = useState({ school_id: "", first_name: "", last_name: "", email: "" });
-  const [invoiceForm, setInvoiceForm] = useState({ student_id: "", amount: "", issue_date: today, due_date: today, description: "" });
-  const [paymentForm, setPaymentForm] = useState({ invoice_id: "", amount: "", payment_date: today, payment_method: "cash", reference: "" });
+  const [studentForm, setStudentForm] = useState({
+    school_id: "",
+    first_name: "",
+    last_name: "",
+    email: "",
+  });
+  const [invoiceForm, setInvoiceForm] = useState({
+    student_id: "",
+    amount: "",
+    issue_date: today,
+    due_date: today,
+    description: "",
+  });
+  const [paymentForm, setPaymentForm] = useState({
+    invoice_id: "",
+    amount: "",
+    payment_date: today,
+    payment_method: "cash",
+    reference: "",
+  });
 
   const [schoolStatusId, setSchoolStatusId] = useState("");
   const [studentStatusId, setStudentStatusId] = useState("");
@@ -43,7 +60,8 @@ export default function App() {
     if (api.isAuthenticated()) {
       setIsAuthenticated(true);
       // Optionally fetch current user info
-      api.getCurrentUser()
+      api
+        .getCurrentUser()
         .then(setUser)
         .catch(() => {
           // Token invalid, logout
@@ -112,7 +130,9 @@ export default function App() {
       <div className="page">
         <header>
           <h1>Mattilda Mini Client</h1>
-          <p>Connected to <code>{api.baseUrl}</code></p>
+          <p>
+            Connected to <code>{api.baseUrl}</code>
+          </p>
         </header>
 
         {message && <div className="banner ok">{message}</div>}
@@ -195,11 +215,24 @@ export default function App() {
     <div className="page">
       <header>
         <h1>Mattilda Mini Client</h1>
-        <p>Connected to <code>{api.baseUrl}</code></p>
+        <p>
+          Connected to <code>{api.baseUrl}</code>
+        </p>
         {user && (
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem" }}>
-            <span>Logged in as: <strong>{user.username}</strong> ({user.email})</span>
-            <button onClick={handleLogout} style={{ padding: "0.5rem 1rem" }}>Logout</button>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: "1rem",
+            }}
+          >
+            <span>
+              Logged in as: <strong>{user.username}</strong> ({user.email})
+            </span>
+            <button onClick={handleLogout} style={{ padding: "0.5rem 1rem" }}>
+              Logout
+            </button>
           </div>
         )}
       </header>
@@ -209,102 +242,222 @@ export default function App() {
 
       <section className="card">
         <h2>Schools</h2>
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          run(async () => {
-            await api.createSchool({ name: schoolForm.name, email: schoolForm.email || null });
-            setSchoolForm({ name: "", email: "" });
-            setSchools(await api.listSchools());
-          }, "School created");
-        }}>
-          <input placeholder="School name" value={schoolForm.name} onChange={(e) => setSchoolForm({ ...schoolForm, name: e.target.value })} required />
-          <input placeholder="School email (optional)" type="email" value={schoolForm.email} onChange={(e) => setSchoolForm({ ...schoolForm, email: e.target.value })} />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            run(async () => {
+              await api.createSchool({ name: schoolForm.name, email: schoolForm.email || null });
+              setSchoolForm({ name: "", email: "" });
+              setSchools(await api.listSchools());
+            }, "School created");
+          }}
+        >
+          <input
+            placeholder="School name"
+            value={schoolForm.name}
+            onChange={(e) => setSchoolForm({ ...schoolForm, name: e.target.value })}
+            required
+          />
+          <input
+            placeholder="School email (optional)"
+            type="email"
+            value={schoolForm.email}
+            onChange={(e) => setSchoolForm({ ...schoolForm, email: e.target.value })}
+          />
           <button type="submit">Create</button>
-          <button type="button" onClick={() => run(async () => setSchools(await api.listSchools()))}>Refresh</button>
+          <button
+            type="button"
+            onClick={() => run(async () => setSchools(await api.listSchools()))}
+          >
+            Refresh
+          </button>
         </form>
         <pre>{pretty(schools)}</pre>
       </section>
 
       <section className="card">
         <h2>Students</h2>
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          run(async () => {
-            await api.createStudent({
-              school_id: Number(studentForm.school_id),
-              first_name: studentForm.first_name,
-              last_name: studentForm.last_name,
-              email: studentForm.email || null
-            });
-            setStudentForm({ school_id: "", first_name: "", last_name: "", email: "" });
-            setStudents(await api.listStudents());
-          }, "Student created");
-        }}>
-          <input placeholder="School ID" value={studentForm.school_id} onChange={(e) => setStudentForm({ ...studentForm, school_id: e.target.value })} required />
-          <input placeholder="First name" value={studentForm.first_name} onChange={(e) => setStudentForm({ ...studentForm, first_name: e.target.value })} required />
-          <input placeholder="Last name" value={studentForm.last_name} onChange={(e) => setStudentForm({ ...studentForm, last_name: e.target.value })} required />
-          <input placeholder="Email (optional)" type="email" value={studentForm.email} onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })} />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            run(async () => {
+              await api.createStudent({
+                school_id: Number(studentForm.school_id),
+                first_name: studentForm.first_name,
+                last_name: studentForm.last_name,
+                email: studentForm.email || null,
+              });
+              setStudentForm({ school_id: "", first_name: "", last_name: "", email: "" });
+              setStudents(await api.listStudents());
+            }, "Student created");
+          }}
+        >
+          <input
+            placeholder="School ID"
+            value={studentForm.school_id}
+            onChange={(e) => setStudentForm({ ...studentForm, school_id: e.target.value })}
+            required
+          />
+          <input
+            placeholder="First name"
+            value={studentForm.first_name}
+            onChange={(e) => setStudentForm({ ...studentForm, first_name: e.target.value })}
+            required
+          />
+          <input
+            placeholder="Last name"
+            value={studentForm.last_name}
+            onChange={(e) => setStudentForm({ ...studentForm, last_name: e.target.value })}
+            required
+          />
+          <input
+            placeholder="Email (optional)"
+            type="email"
+            value={studentForm.email}
+            onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
+          />
           <button type="submit">Create</button>
-          <button type="button" onClick={() => run(async () => setStudents(await api.listStudents()))}>Refresh</button>
+          <button
+            type="button"
+            onClick={() => run(async () => setStudents(await api.listStudents()))}
+          >
+            Refresh
+          </button>
         </form>
         <pre>{pretty(students)}</pre>
       </section>
 
       <section className="card">
         <h2>Invoices</h2>
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          run(async () => {
-            await api.createInvoice({
-              student_id: Number(invoiceForm.student_id),
-              amount: invoiceForm.amount,
-              issue_date: invoiceForm.issue_date,
-              due_date: invoiceForm.due_date,
-              description: invoiceForm.description || null
-            });
-            setInvoiceForm({ student_id: "", amount: "", issue_date: today, due_date: today, description: "" });
-            setInvoices(await api.listInvoices());
-          }, "Invoice created");
-        }}>
-          <input placeholder="Student ID" value={invoiceForm.student_id} onChange={(e) => setInvoiceForm({ ...invoiceForm, student_id: e.target.value })} required />
-          <input placeholder="Amount" type="number" step="0.01" value={invoiceForm.amount} onChange={(e) => setInvoiceForm({ ...invoiceForm, amount: e.target.value })} required />
-          <input type="date" value={invoiceForm.issue_date} onChange={(e) => setInvoiceForm({ ...invoiceForm, issue_date: e.target.value })} required />
-          <input type="date" value={invoiceForm.due_date} onChange={(e) => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })} required />
-          <input placeholder="Description" value={invoiceForm.description} onChange={(e) => setInvoiceForm({ ...invoiceForm, description: e.target.value })} />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            run(async () => {
+              await api.createInvoice({
+                student_id: Number(invoiceForm.student_id),
+                amount: invoiceForm.amount,
+                issue_date: invoiceForm.issue_date,
+                due_date: invoiceForm.due_date,
+                description: invoiceForm.description || null,
+              });
+              setInvoiceForm({
+                student_id: "",
+                amount: "",
+                issue_date: today,
+                due_date: today,
+                description: "",
+              });
+              setInvoices(await api.listInvoices());
+            }, "Invoice created");
+          }}
+        >
+          <input
+            placeholder="Student ID"
+            value={invoiceForm.student_id}
+            onChange={(e) => setInvoiceForm({ ...invoiceForm, student_id: e.target.value })}
+            required
+          />
+          <input
+            placeholder="Amount"
+            type="number"
+            step="0.01"
+            value={invoiceForm.amount}
+            onChange={(e) => setInvoiceForm({ ...invoiceForm, amount: e.target.value })}
+            required
+          />
+          <input
+            type="date"
+            value={invoiceForm.issue_date}
+            onChange={(e) => setInvoiceForm({ ...invoiceForm, issue_date: e.target.value })}
+            required
+          />
+          <input
+            type="date"
+            value={invoiceForm.due_date}
+            onChange={(e) => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })}
+            required
+          />
+          <input
+            placeholder="Description"
+            value={invoiceForm.description}
+            onChange={(e) => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
+          />
           <button type="submit">Create</button>
-          <button type="button" onClick={() => run(async () => setInvoices(await api.listInvoices()))}>Refresh</button>
+          <button
+            type="button"
+            onClick={() => run(async () => setInvoices(await api.listInvoices()))}
+          >
+            Refresh
+          </button>
         </form>
         <pre>{pretty(invoices)}</pre>
       </section>
 
       <section className="card">
         <h2>Payments</h2>
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          run(async () => {
-            await api.createPayment({
-              invoice_id: Number(paymentForm.invoice_id),
-              amount: paymentForm.amount,
-              payment_date: paymentForm.payment_date,
-              payment_method: paymentForm.payment_method,
-              reference: paymentForm.reference || null
-            });
-            setPaymentForm({ invoice_id: "", amount: "", payment_date: today, payment_method: "cash", reference: "" });
-            setPayments(await api.listPayments());
-          }, "Payment created");
-        }}>
-          <input placeholder="Invoice ID" value={paymentForm.invoice_id} onChange={(e) => setPaymentForm({ ...paymentForm, invoice_id: e.target.value })} required />
-          <input placeholder="Amount" type="number" step="0.01" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} required />
-          <input type="date" value={paymentForm.payment_date} onChange={(e) => setPaymentForm({ ...paymentForm, payment_date: e.target.value })} required />
-          <select value={paymentForm.payment_method} onChange={(e) => setPaymentForm({ ...paymentForm, payment_method: e.target.value })}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            run(async () => {
+              await api.createPayment({
+                invoice_id: Number(paymentForm.invoice_id),
+                amount: paymentForm.amount,
+                payment_date: paymentForm.payment_date,
+                payment_method: paymentForm.payment_method,
+                reference: paymentForm.reference || null,
+              });
+              setPaymentForm({
+                invoice_id: "",
+                amount: "",
+                payment_date: today,
+                payment_method: "cash",
+                reference: "",
+              });
+              setPayments(await api.listPayments());
+            }, "Payment created");
+          }}
+        >
+          <input
+            placeholder="Invoice ID"
+            value={paymentForm.invoice_id}
+            onChange={(e) => setPaymentForm({ ...paymentForm, invoice_id: e.target.value })}
+            required
+          />
+          <input
+            placeholder="Amount"
+            type="number"
+            step="0.01"
+            value={paymentForm.amount}
+            onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
+            required
+          />
+          <input
+            type="date"
+            value={paymentForm.payment_date}
+            onChange={(e) => setPaymentForm({ ...paymentForm, payment_date: e.target.value })}
+            required
+          />
+          <select
+            value={paymentForm.payment_method}
+            onChange={(e) => setPaymentForm({ ...paymentForm, payment_method: e.target.value })}
+          >
             <option value="cash">cash</option>
             <option value="card">card</option>
             <option value="transfer">transfer</option>
             <option value="other">other</option>
           </select>
-          <input placeholder="Reference" value={paymentForm.reference} onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })} />
+          <input
+            placeholder="Reference"
+            value={paymentForm.reference}
+            onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })}
+          />
           <button type="submit">Create</button>
-          <button type="button" onClick={() => run(async () => setPayments(await api.listPayments()))}>Refresh</button>
+          <button
+            type="button"
+            onClick={() => run(async () => setPayments(await api.listPayments()))}
+          >
+            Refresh
+          </button>
         </form>
         <pre>{pretty(payments)}</pre>
       </section>
@@ -312,18 +465,34 @@ export default function App() {
       <section className="card">
         <h2>Account Status</h2>
         <div className="status-grid">
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            run(async () => setStatus(await api.getSchoolAccountStatus(Number(schoolStatusId))));
-          }}>
-            <input placeholder="School ID" value={schoolStatusId} onChange={(e) => setSchoolStatusId(e.target.value)} required />
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              run(async () => setStatus(await api.getSchoolAccountStatus(Number(schoolStatusId))));
+            }}
+          >
+            <input
+              placeholder="School ID"
+              value={schoolStatusId}
+              onChange={(e) => setSchoolStatusId(e.target.value)}
+              required
+            />
             <button type="submit">Get School Status</button>
           </form>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            run(async () => setStatus(await api.getStudentAccountStatus(Number(studentStatusId))));
-          }}>
-            <input placeholder="Student ID" value={studentStatusId} onChange={(e) => setStudentStatusId(e.target.value)} required />
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              run(async () =>
+                setStatus(await api.getStudentAccountStatus(Number(studentStatusId)))
+              );
+            }}
+          >
+            <input
+              placeholder="Student ID"
+              value={studentStatusId}
+              onChange={(e) => setStudentStatusId(e.target.value)}
+              required
+            />
             <button type="submit">Get Student Status</button>
           </form>
         </div>

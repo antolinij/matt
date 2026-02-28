@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs shell shell-db test test-cov clean install migrate migrate-create migrate-down migrate-history format lint check run dev db-reset db-backup db-restore prune worker-logs worker-restart redis-cli redis-monitor redis-stats
+.PHONY: help build up down restart logs shell shell-db test test-cov clean install migrate migrate-create migrate-down migrate-history format lint format-webapp lint-webapp check-webapp check run dev db-reset db-backup db-restore prune worker-logs worker-restart redis-cli redis-monitor redis-stats
 
 # Default target
 .DEFAULT_GOAL := help
@@ -227,7 +227,35 @@ lint: ## Lint code with flake8 and mypy
 	mypy app
 	@echo "$(GREEN)Linting completed!$(NC)"
 
-check: format lint test ## Run all checks (format, lint, test)
+format-webapp: ## Format webapp code with prettier
+	@echo "$(BLUE)Formatting webapp code...$(NC)"
+	cd webapp && npm run format
+	@echo "$(GREEN)Webapp code formatted!$(NC)"
+
+lint-webapp: ## Lint webapp code with ESLint
+	@echo "$(BLUE)Linting webapp code...$(NC)"
+	cd webapp && npm run lint
+	@echo "$(GREEN)Webapp linting completed!$(NC)"
+
+check-webapp: ## Check webapp formatting and linting
+	@echo "$(BLUE)Checking webapp code quality...$(NC)"
+	cd webapp && npm run check
+	@echo "$(GREEN)Webapp checks passed!$(NC)"
+
+check: ## Run all checks (backend + frontend format, lint, test)
+	@echo "$(BLUE)Running comprehensive code quality checks...$(NC)"
+	@echo ""
+	@echo "$(BLUE)=== Backend Checks ===$(NC)"
+	@$(MAKE) format
+	@$(MAKE) lint
+	@echo ""
+	@echo "$(BLUE)=== Frontend Checks ===$(NC)"
+	@$(MAKE) check-webapp
+	@echo ""
+	@echo "$(BLUE)=== Running Tests ===$(NC)"
+	@$(MAKE) test
+	@echo ""
+	@echo "$(GREEN)All checks passed!$(NC)"
 
 ##@ Cleanup
 
