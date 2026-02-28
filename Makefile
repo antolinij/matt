@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs shell shell-db test test-cov clean install migrate migrate-create migrate-down migrate-history format lint format-webapp lint-webapp check-webapp check run dev db-reset db-backup db-restore prune worker-logs worker-restart redis-cli redis-monitor redis-stats
+.PHONY: help build up down restart logs shell shell-db test test-cov clean install install-dev migrate migrate-create migrate-down migrate-history format format-check lint format-webapp lint-webapp check-webapp check run dev db-reset db-backup db-restore prune worker-logs worker-restart redis-cli redis-monitor redis-stats
 
 # Default target
 .DEFAULT_GOAL := help
@@ -89,6 +89,11 @@ install: ## Install Python dependencies locally
 	@echo "$(BLUE)Installing dependencies...$(NC)"
 	$(PIP) install -r requirements.txt
 	@echo "$(GREEN)Dependencies installed!$(NC)"
+
+install-dev: install ## Install development dependencies (linters, formatters)
+	@echo "$(BLUE)Installing development dependencies...$(NC)"
+	$(PIP) install -r requirements-dev.txt
+	@echo "$(GREEN)Development dependencies installed!$(NC)"
 
 run: ## Run app locally (without Docker)
 	@echo "$(BLUE)Starting local development server...$(NC)"
@@ -215,11 +220,17 @@ test-watch: ## Run tests in watch mode (requires pytest-watch)
 
 ##@ Code Quality
 
-format: ## Format code with black and isort
+format: ## Format code with black and isort (auto-fix)
 	@echo "$(BLUE)Formatting code...$(NC)"
 	black app tests
 	isort app tests
 	@echo "$(GREEN)Code formatted!$(NC)"
+
+format-check: ## Check code formatting without modifying files
+	@echo "$(BLUE)Checking code formatting...$(NC)"
+	black --check app tests
+	isort --check-only app tests
+	@echo "$(GREEN)Code formatting is correct!$(NC)"
 
 lint: ## Lint code with flake8 and mypy
 	@echo "$(BLUE)Linting code...$(NC)"
@@ -227,7 +238,7 @@ lint: ## Lint code with flake8 and mypy
 	mypy app
 	@echo "$(GREEN)Linting completed!$(NC)"
 
-format-webapp: ## Format webapp code with prettier
+format-webapp: ## Format webapp code with prettier (auto-fix)
 	@echo "$(BLUE)Formatting webapp code...$(NC)"
 	cd webapp && npm run format
 	@echo "$(GREEN)Webapp code formatted!$(NC)"
@@ -237,16 +248,16 @@ lint-webapp: ## Lint webapp code with ESLint
 	cd webapp && npm run lint
 	@echo "$(GREEN)Webapp linting completed!$(NC)"
 
-check-webapp: ## Check webapp formatting and linting
+check-webapp: ## Check webapp formatting and linting without modifying
 	@echo "$(BLUE)Checking webapp code quality...$(NC)"
 	cd webapp && npm run check
 	@echo "$(GREEN)Webapp checks passed!$(NC)"
 
-check: ## Run all checks (backend + frontend format, lint, test)
+check: ## Run all checks WITHOUT modifying code (backend + frontend)
 	@echo "$(BLUE)Running comprehensive code quality checks...$(NC)"
 	@echo ""
 	@echo "$(BLUE)=== Backend Checks ===$(NC)"
-	@$(MAKE) format
+	@$(MAKE) format-check
 	@$(MAKE) lint
 	@echo ""
 	@echo "$(BLUE)=== Frontend Checks ===$(NC)"

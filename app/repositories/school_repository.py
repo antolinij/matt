@@ -1,17 +1,18 @@
 """School repository for database operations"""
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError, OperationalError, DataError
-from typing import List, Optional
-from decimal import Decimal
 
-from app.db.models import School, Student, Invoice, Payment, StudentStatus, InvoiceStatus
-from app.core.exceptions import (
-    DuplicateRecordException,
-    DatabaseConnectionException,
-    DatabaseOperationException,
-    InvalidDataException
-)
+from decimal import Decimal
+from typing import List, Optional
+
+from sqlalchemy import func, select
+from sqlalchemy.exc import DataError, IntegrityError, OperationalError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import (DatabaseConnectionException,
+                                 DatabaseOperationException,
+                                 DuplicateRecordException,
+                                 InvalidDataException)
+from app.db.models import (Invoice, InvoiceStatus, Payment, School, Student,
+                           StudentStatus)
 
 
 class SchoolRepository:
@@ -20,8 +21,13 @@ class SchoolRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create(self, name: str, address: Optional[str] = None,
-                    phone: Optional[str] = None, email: Optional[str] = None) -> School:
+    async def create(
+        self,
+        name: str,
+        address: Optional[str] = None,
+        phone: Optional[str] = None,
+        email: Optional[str] = None,
+    ) -> School:
         """
         Create a new school.
 
@@ -51,7 +57,7 @@ class SchoolRepository:
             error_msg = str(e.orig).lower()
 
             # Check which constraint was violated
-            if 'email' in error_msg:
+            if "email" in error_msg:
                 raise DuplicateRecordException("School", "email", email)
             else:
                 raise DatabaseOperationException("create", "School", str(e.orig))
@@ -105,9 +111,7 @@ class SchoolRepository:
             DatabaseOperationException: If operation fails
         """
         try:
-            result = await self.db.execute(
-                select(School).offset(skip).limit(limit)
-            )
+            result = await self.db.execute(select(School).offset(skip).limit(limit))
             return list(result.scalars().all())
         except OperationalError as e:
             raise DatabaseConnectionException(str(e.orig))
@@ -148,8 +152,10 @@ class SchoolRepository:
             error_msg = str(e.orig).lower()
 
             # Check which constraint was violated
-            if 'email' in error_msg:
-                raise DuplicateRecordException("School", "email", kwargs.get('email', 'unknown'))
+            if "email" in error_msg:
+                raise DuplicateRecordException(
+                    "School", "email", kwargs.get("email", "unknown")
+                )
             else:
                 raise DatabaseOperationException("update", "School", str(e.orig))
         except DataError as e:
@@ -214,10 +220,11 @@ class SchoolRepository:
             # Get student counts in a single query
             result = await self.db.execute(
                 select(
-                    func.count(Student.id).label('total_students'),
-                    func.count(Student.id).filter(Student.status == StudentStatus.ACTIVE).label('active_students')
-                )
-                .filter(Student.school_id == school_id)
+                    func.count(Student.id).label("total_students"),
+                    func.count(Student.id)
+                    .filter(Student.status == StudentStatus.ACTIVE)
+                    .label("active_students"),
+                ).filter(Student.school_id == school_id)
             )
             student_counts = result.one()
             total_students = student_counts.total_students
@@ -232,7 +239,7 @@ class SchoolRepository:
                     Invoice.amount,
                     Invoice.due_date,
                     Invoice.status,
-                    func.coalesce(func.sum(Payment.amount), 0).label('paid_amount')
+                    func.coalesce(func.sum(Payment.amount), 0).label("paid_amount"),
                 )
                 .join(Student, Invoice.student_id == Student.id)
                 .outerjoin(Payment, Invoice.id == Payment.invoice_id)
@@ -242,15 +249,15 @@ class SchoolRepository:
                     Invoice.invoice_number,
                     Invoice.amount,
                     Invoice.due_date,
-                    Invoice.status
+                    Invoice.status,
                 )
             )
 
             result = await self.db.execute(query)
             invoice_rows = result.all()
 
-            total_invoiced = Decimal('0')
-            total_paid = Decimal('0')
+            total_invoiced = Decimal("0")
+            total_paid = Decimal("0")
             invoice_details = []
 
             for row in invoice_rows:
@@ -261,32 +268,36 @@ class SchoolRepository:
                 total_invoiced += invoice_amount
                 total_paid += paid_amount
 
-                invoice_details.append({
-                    'id': row.id,
-                    'invoice_number': row.invoice_number,
-                    'amount': row.amount,
-                    'paid_amount': paid_amount,
-                    'balance': balance,
-                    'due_date': row.due_date,
-                    'status': row.status
-                })
+                invoice_details.append(
+                    {
+                        "id": row.id,
+                        "invoice_number": row.invoice_number,
+                        "amount": row.amount,
+                        "paid_amount": paid_amount,
+                        "balance": balance,
+                        "due_date": row.due_date,
+                        "status": row.status,
+                    }
+                )
 
             return {
-                'school_id': school.id,
-                'school_name': school.name,
-                'total_students': total_students,
-                'active_students': active_students,
-                'total_invoiced': total_invoiced,
-                'total_paid': total_paid,
-                'total_pending': total_invoiced - total_paid,
-                'invoices': invoice_details
+                "school_id": school.id,
+                "school_name": school.name,
+                "total_students": total_students,
+                "active_students": active_students,
+                "total_invoiced": total_invoiced,
+                "total_paid": total_paid,
+                "total_pending": total_invoiced - total_paid,
+                "invoices": invoice_details,
             }
         except OperationalError as e:
             raise DatabaseConnectionException(str(e.orig))
         except Exception as e:
             raise DatabaseOperationException("get_account_status", "School", str(e))
 
-    async def get_student_account_status(self, school_id: int, student_id: int) -> Optional[dict]:
+    async def get_student_account_status(
+        self, school_id: int, student_id: int
+    ) -> Optional[dict]:
         """
         Get account status for a specific student in a specific school.
 
@@ -311,8 +322,7 @@ class SchoolRepository:
             # Verify student exists AND belongs to this school
             result = await self.db.execute(
                 select(Student).filter(
-                    Student.id == student_id,
-                    Student.school_id == school_id
+                    Student.id == student_id, Student.school_id == school_id
                 )
             )
             student = result.scalar_one_or_none()
@@ -327,7 +337,7 @@ class SchoolRepository:
                     Invoice.amount,
                     Invoice.due_date,
                     Invoice.status,
-                    func.coalesce(func.sum(Payment.amount), 0).label('paid_amount')
+                    func.coalesce(func.sum(Payment.amount), 0).label("paid_amount"),
                 )
                 .outerjoin(Payment, Invoice.id == Payment.invoice_id)
                 .filter(Invoice.student_id == student_id)
@@ -336,15 +346,15 @@ class SchoolRepository:
                     Invoice.invoice_number,
                     Invoice.amount,
                     Invoice.due_date,
-                    Invoice.status
+                    Invoice.status,
                 )
             )
 
             result = await self.db.execute(query)
             invoice_rows = result.all()
 
-            total_invoiced = Decimal('0')
-            total_paid = Decimal('0')
+            total_invoiced = Decimal("0")
+            total_paid = Decimal("0")
             invoice_details = []
 
             for row in invoice_rows:
@@ -355,25 +365,29 @@ class SchoolRepository:
                 total_invoiced += invoice_amount
                 total_paid += paid_amount
 
-                invoice_details.append({
-                    'id': row.id,
-                    'invoice_number': row.invoice_number,
-                    'amount': row.amount,
-                    'paid_amount': paid_amount,
-                    'balance': balance,
-                    'due_date': row.due_date,
-                    'status': row.status
-                })
+                invoice_details.append(
+                    {
+                        "id": row.id,
+                        "invoice_number": row.invoice_number,
+                        "amount": row.amount,
+                        "paid_amount": paid_amount,
+                        "balance": balance,
+                        "due_date": row.due_date,
+                        "status": row.status,
+                    }
+                )
 
             return {
-                'student_id': student.id,
-                'student_name': f"{student.first_name} {student.last_name}",
-                'total_invoiced': total_invoiced,
-                'total_paid': total_paid,
-                'total_pending': total_invoiced - total_paid,
-                'invoices': invoice_details
+                "student_id": student.id,
+                "student_name": f"{student.first_name} {student.last_name}",
+                "total_invoiced": total_invoiced,
+                "total_paid": total_paid,
+                "total_pending": total_invoiced - total_paid,
+                "invoices": invoice_details,
             }
         except OperationalError as e:
             raise DatabaseConnectionException(str(e.orig))
         except Exception as e:
-            raise DatabaseOperationException("get_student_account_status", "School", str(e))
+            raise DatabaseOperationException(
+                "get_student_account_status", "School", str(e)
+            )

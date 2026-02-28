@@ -1,11 +1,16 @@
 """Database models"""
-from .school import School
-from .student import Student, StudentStatus
+
+from .account_movement import AccountMovement
+from .account_movement import EntityType as MovementEntityType
+from .account_movement import MovementType
+from .account_snapshot import AccountSnapshot
+from .account_snapshot import EntityType as SnapshotEntityType
+from .account_snapshot import SnapshotType
 from .invoice import Invoice, InvoiceStatus
 from .payment import Payment, PaymentMethod
+from .school import School
+from .student import Student, StudentStatus
 from .user import User, UserRole
-from .account_movement import AccountMovement, MovementType, EntityType as MovementEntityType
-from .account_snapshot import AccountSnapshot, SnapshotType, EntityType as SnapshotEntityType
 
 __all__ = [
     "School",

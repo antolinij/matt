@@ -1,13 +1,17 @@
 """Account status schemas (Pydantic models)"""
-from pydantic import BaseModel, ConfigDict
-from typing import List
+
 from datetime import date
 from decimal import Decimal
+from typing import List
+
+from pydantic import BaseModel, ConfigDict
+
 from app.db.models import InvoiceStatus
 
 
 class InvoiceDetail(BaseModel):
     """Invoice detail for account status"""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -21,6 +25,7 @@ class InvoiceDetail(BaseModel):
 
 class StudentAccountStatus(BaseModel):
     """Student account status summary"""
+
     student_id: int
     student_name: str
     total_invoiced: Decimal
@@ -31,6 +36,7 @@ class StudentAccountStatus(BaseModel):
 
 class SchoolAccountStatus(BaseModel):
     """School account status summary"""
+
     school_id: int
     school_name: str
     total_students: int
@@ -43,6 +49,7 @@ class SchoolAccountStatus(BaseModel):
 
 class SchoolStudentAccountStatus(BaseModel):
     """Account status for a specific student in a specific school"""
+
     school_id: int
     school_name: str
     student_id: int

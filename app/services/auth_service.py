@@ -4,19 +4,17 @@ Authentication Service
 Business logic layer for user authentication operations.
 Handles registration, login, token refresh, and password management.
 """
+
 from typing import Optional
+
 from fastapi import HTTPException, status
 
-from app.repositories.user_repository import UserRepository
+from app.core.security import (create_access_token, create_refresh_token,
+                               decode_token, get_password_hash,
+                               verify_password)
 from app.db.models.user import User
-from app.schemas import UserCreate, UserUpdate, Token
-from app.core.security import (
-    verify_password,
-    get_password_hash,
-    create_access_token,
-    create_refresh_token,
-    decode_token,
-)
+from app.repositories.user_repository import UserRepository
+from app.schemas import Token, UserCreate, UserUpdate
 
 
 class AuthService:
@@ -97,8 +95,7 @@ class AuthService:
 
         if not user.is_active:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Inactive user"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
             )
 
         # Update last login
@@ -109,9 +106,7 @@ class AuthService:
         refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
         return Token(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            token_type="bearer"
+            access_token=access_token, refresh_token=refresh_token, token_type="bearer"
         )
 
     async def refresh_access_token(self, refresh_token: str) -> Token:
@@ -135,13 +130,12 @@ class AuthService:
             if token_type != "refresh":
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid token type"
+                    detail="Invalid token type",
                 )
 
             if user_id is None:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid token"
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
                 )
 
             # Verify user still exists and is active
@@ -149,7 +143,7 @@ class AuthService:
             if not user or not user.is_active:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="User not found or inactive"
+                    detail="User not found or inactive",
                 )
 
             # Generate new token pair
@@ -159,7 +153,7 @@ class AuthService:
             return Token(
                 access_token=new_access_token,
                 refresh_token=new_refresh_token,
-                token_type="bearer"
+                token_type="bearer",
             )
 
         except HTTPException:
@@ -167,7 +161,7 @@ class AuthService:
         except Exception:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials"
+                detail="Could not validate credentials",
             )
 
     async def update_user(self, user_id: int, user_data: UserUpdate) -> User:
@@ -187,8 +181,7 @@ class AuthService:
         user = await self.user_repository.get(user_id)
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
 
         # Check if new email already exists
@@ -197,7 +190,7 @@ class AuthService:
             if existing_email:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Email already registered"
+                    detail="Email already registered",
                 )
             user.email = user_data.email
 

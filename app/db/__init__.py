@@ -1,6 +1,9 @@
 """Database module"""
+
 from app.core.database import Base, engine, get_db
-from .models import School, Student, Invoice, Payment, StudentStatus, InvoiceStatus, PaymentMethod
+
+from .models import (Invoice, InvoiceStatus, Payment, PaymentMethod, School,
+                     Student, StudentStatus)
 
 __all__ = [
     "Base",

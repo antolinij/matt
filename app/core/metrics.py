@@ -1,10 +1,10 @@
 """Prometheus metrics for API observability."""
+
 from time import perf_counter
 from typing import Optional
 
 from fastapi import Request
 from prometheus_client import Counter, Histogram
-
 
 HTTP_REQUESTS_TOTAL = Counter(
     "mattilda_http_requests_total",
@@ -66,10 +66,14 @@ def observe_request(request: Request, status_code: int, started_at: float) -> No
     duration = perf_counter() - started_at
 
     HTTP_REQUESTS_TOTAL.labels(method=method, path=path, status=status).inc()
-    HTTP_REQUEST_DURATION_SECONDS.labels(method=method, path=path, status=status).observe(duration)
+    HTTP_REQUEST_DURATION_SECONDS.labels(
+        method=method, path=path, status=status
+    ).observe(duration)
 
 
-def observe_error(request: Request, status_code: int, exception_type: Optional[str]) -> None:
+def observe_error(
+    request: Request, status_code: int, exception_type: Optional[str]
+) -> None:
     """Record error counter by exception type."""
     path = request_path_label(request)
     HTTP_ERRORS_TOTAL.labels(

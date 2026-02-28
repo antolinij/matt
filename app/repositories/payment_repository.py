@@ -1,18 +1,18 @@
 """Payment repository for database operations"""
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError, OperationalError, DataError
-from typing import List, Optional
-from decimal import Decimal
-from datetime import date
 
-from app.db.models import Payment, Invoice, PaymentMethod, InvoiceStatus
-from app.core.exceptions import (
-    ForeignKeyViolationException,
-    DatabaseConnectionException,
-    DatabaseOperationException,
-    InvalidDataException
-)
+from datetime import date
+from decimal import Decimal
+from typing import List, Optional
+
+from sqlalchemy import select
+from sqlalchemy.exc import DataError, IntegrityError, OperationalError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import (DatabaseConnectionException,
+                                 DatabaseOperationException,
+                                 ForeignKeyViolationException,
+                                 InvalidDataException)
+from app.db.models import Invoice, InvoiceStatus, Payment, PaymentMethod
 
 
 class PaymentRepository:
@@ -21,9 +21,14 @@ class PaymentRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create(self, invoice_id: int, amount: Decimal, payment_date: date,
-                    payment_method: PaymentMethod = PaymentMethod.OTHER,
-                    reference: Optional[str] = None) -> Optional[Payment]:
+    async def create(
+        self,
+        invoice_id: int,
+        amount: Decimal,
+        payment_date: date,
+        payment_method: PaymentMethod = PaymentMethod.OTHER,
+        reference: Optional[str] = None,
+    ) -> Optional[Payment]:
         """
         Create payment and update invoice status.
 
@@ -59,7 +64,7 @@ class PaymentRepository:
             if amount > remaining:
                 raise InvalidDataException(
                     "Payment",
-                    f"Payment amount ({amount}) exceeds remaining balance ({remaining})"
+                    f"Payment amount ({amount}) exceeds remaining balance ({remaining})",
                 )
 
             # Create payment
@@ -68,7 +73,7 @@ class PaymentRepository:
                 amount=amount,
                 payment_date=payment_date,
                 payment_method=payment_method,
-                reference=reference
+                reference=reference,
             )
             self.db.add(payment)
 
@@ -89,7 +94,7 @@ class PaymentRepository:
             error_msg = str(e.orig).lower()
 
             # Check which constraint was violated
-            if 'foreign key' in error_msg and 'invoice' in error_msg:
+            if "foreign key" in error_msg and "invoice" in error_msg:
                 raise ForeignKeyViolationException("Payment", "invoice_id", invoice_id)
             else:
                 raise DatabaseOperationException("create", "Payment", str(e.orig))
@@ -127,8 +132,9 @@ class PaymentRepository:
         except Exception as e:
             raise DatabaseOperationException("get", "Payment", str(e))
 
-    async def get_all(self, skip: int = 0, limit: int = 100,
-                     invoice_id: Optional[int] = None) -> List[Payment]:
+    async def get_all(
+        self, skip: int = 0, limit: int = 100, invoice_id: Optional[int] = None
+    ) -> List[Payment]:
         """
         Get all payments with pagination and optional invoice filter.
 
@@ -191,8 +197,10 @@ class PaymentRepository:
             error_msg = str(e.orig).lower()
 
             # Check which constraint was violated
-            if 'foreign key' in error_msg and 'invoice' in error_msg:
-                raise ForeignKeyViolationException("Payment", "invoice_id", kwargs.get('invoice_id', 'unknown'))
+            if "foreign key" in error_msg and "invoice" in error_msg:
+                raise ForeignKeyViolationException(
+                    "Payment", "invoice_id", kwargs.get("invoice_id", "unknown")
+                )
             else:
                 raise DatabaseOperationException("update", "Payment", str(e.orig))
         except DataError as e:

@@ -1,19 +1,19 @@
 """Student repository for database operations"""
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError, OperationalError, DataError
-from typing import List, Optional
-from decimal import Decimal
-from datetime import date
 
-from app.db.models import School, Student, Invoice, Payment, StudentStatus
-from app.core.exceptions import (
-    DuplicateRecordException,
-    ForeignKeyViolationException,
-    DatabaseConnectionException,
-    DatabaseOperationException,
-    InvalidDataException
-)
+from datetime import date
+from decimal import Decimal
+from typing import List, Optional
+
+from sqlalchemy import func, select
+from sqlalchemy.exc import DataError, IntegrityError, OperationalError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import (DatabaseConnectionException,
+                                 DatabaseOperationException,
+                                 DuplicateRecordException,
+                                 ForeignKeyViolationException,
+                                 InvalidDataException)
+from app.db.models import Invoice, Payment, School, Student, StudentStatus
 
 
 class StudentRepository:
@@ -22,9 +22,15 @@ class StudentRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create(self, school_id: int, first_name: str, last_name: str,
-                    email: Optional[str] = None, enrollment_date: Optional[date] = None,
-                    status: StudentStatus = StudentStatus.ACTIVE) -> Student:
+    async def create(
+        self,
+        school_id: int,
+        first_name: str,
+        last_name: str,
+        email: Optional[str] = None,
+        enrollment_date: Optional[date] = None,
+        status: StudentStatus = StudentStatus.ACTIVE,
+    ) -> Student:
         """
         Create a new student.
 
@@ -59,7 +65,7 @@ class StudentRepository:
                 last_name=last_name,
                 email=email,
                 enrollment_date=enrollment_date,
-                status=status
+                status=status,
             )
             self.db.add(student)
             await self.db.commit()
@@ -70,9 +76,9 @@ class StudentRepository:
             error_msg = str(e.orig).lower()
 
             # Check which constraint was violated
-            if 'foreign key' in error_msg and 'school' in error_msg:
+            if "foreign key" in error_msg and "school" in error_msg:
                 raise ForeignKeyViolationException("Student", "school_id", school_id)
-            elif 'email' in error_msg:
+            elif "email" in error_msg:
                 raise DuplicateRecordException("Student", "email", email)
             else:
                 raise DatabaseOperationException("create", "Student", str(e.orig))
@@ -113,8 +119,9 @@ class StudentRepository:
         except Exception as e:
             raise DatabaseOperationException("get", "Student", str(e))
 
-    async def get_all(self, skip: int = 0, limit: int = 100,
-                     school_id: Optional[int] = None) -> List[Student]:
+    async def get_all(
+        self, skip: int = 0, limit: int = 100, school_id: Optional[int] = None
+    ) -> List[Student]:
         """
         Get all students with pagination and optional school filter.
 
@@ -171,7 +178,9 @@ class StudentRepository:
                     select(School.id).filter(School.id == kwargs["school_id"])
                 )
                 if school_exists is None:
-                    raise ForeignKeyViolationException("Student", "school_id", kwargs["school_id"])
+                    raise ForeignKeyViolationException(
+                        "Student", "school_id", kwargs["school_id"]
+                    )
 
             for field, value in kwargs.items():
                 if value is not None and hasattr(student, field):
@@ -185,10 +194,14 @@ class StudentRepository:
             error_msg = str(e.orig).lower()
 
             # Check which constraint was violated
-            if 'foreign key' in error_msg and 'school' in error_msg:
-                raise ForeignKeyViolationException("Student", "school_id", kwargs.get('school_id', 'unknown'))
-            elif 'email' in error_msg:
-                raise DuplicateRecordException("Student", "email", kwargs.get('email', 'unknown'))
+            if "foreign key" in error_msg and "school" in error_msg:
+                raise ForeignKeyViolationException(
+                    "Student", "school_id", kwargs.get("school_id", "unknown")
+                )
+            elif "email" in error_msg:
+                raise DuplicateRecordException(
+                    "Student", "email", kwargs.get("email", "unknown")
+                )
             else:
                 raise DatabaseOperationException("update", "Student", str(e.orig))
         except DataError as e:
@@ -262,7 +275,7 @@ class StudentRepository:
                     Invoice.amount,
                     Invoice.due_date,
                     Invoice.status,
-                    func.coalesce(func.sum(Payment.amount), 0).label('paid_amount')
+                    func.coalesce(func.sum(Payment.amount), 0).label("paid_amount"),
                 )
                 .outerjoin(Payment, Invoice.id == Payment.invoice_id)
                 .filter(Invoice.student_id == student_id)
@@ -271,15 +284,15 @@ class StudentRepository:
                     Invoice.invoice_number,
                     Invoice.amount,
                     Invoice.due_date,
-                    Invoice.status
+                    Invoice.status,
                 )
             )
 
             result = await self.db.execute(query)
             invoice_rows = result.all()
 
-            total_invoiced = Decimal('0')
-            total_paid = Decimal('0')
+            total_invoiced = Decimal("0")
+            total_paid = Decimal("0")
             invoice_details = []
 
             for row in invoice_rows:
@@ -290,23 +303,25 @@ class StudentRepository:
                 total_invoiced += invoice_amount
                 total_paid += paid_amount
 
-                invoice_details.append({
-                    'id': row.id,
-                    'invoice_number': row.invoice_number,
-                    'amount': row.amount,
-                    'paid_amount': paid_amount,
-                    'balance': balance,
-                    'due_date': row.due_date,
-                    'status': row.status
-                })
+                invoice_details.append(
+                    {
+                        "id": row.id,
+                        "invoice_number": row.invoice_number,
+                        "amount": row.amount,
+                        "paid_amount": paid_amount,
+                        "balance": balance,
+                        "due_date": row.due_date,
+                        "status": row.status,
+                    }
+                )
 
             return {
-                'student_id': student.id,
-                'student_name': f"{student.first_name} {student.last_name}",
-                'total_invoiced': total_invoiced,
-                'total_paid': total_paid,
-                'total_pending': total_invoiced - total_paid,
-                'invoices': invoice_details
+                "student_id": student.id,
+                "student_name": f"{student.first_name} {student.last_name}",
+                "total_invoiced": total_invoiced,
+                "total_paid": total_paid,
+                "total_pending": total_invoiced - total_paid,
+                "invoices": invoice_details,
             }
         except OperationalError as e:
             raise DatabaseConnectionException(str(e.orig))

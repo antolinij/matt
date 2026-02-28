@@ -10,8 +10,8 @@ async def test_create_school(authenticated_client):
             "name": "Test School",
             "address": "123 Test St",
             "phone": "+1234567890",
-            "email": "test@school.com"
-        }
+            "email": "test@school.com",
+        },
     )
     assert response.status_code == 201
     data = response.json()
@@ -32,8 +32,7 @@ async def test_get_school_by_id(authenticated_client):
     """Test getting a specific school"""
     # First create a school
     create_response = await authenticated_client.post(
-        "/api/schools/",
-        json={"name": "Another School"}
+        "/api/schools/", json={"name": "Another School"}
     )
     school_id = create_response.json()["id"]
 
@@ -48,15 +47,13 @@ async def test_update_school(authenticated_client):
     """Test updating a school"""
     # Create a school
     create_response = await authenticated_client.post(
-        "/api/schools/",
-        json={"name": "Original Name"}
+        "/api/schools/", json={"name": "Original Name"}
     )
     school_id = create_response.json()["id"]
 
     # Update it
     response = await authenticated_client.put(
-        f"/api/schools/{school_id}",
-        json={"name": "Updated Name"}
+        f"/api/schools/{school_id}", json={"name": "Updated Name"}
     )
     assert response.status_code == 200
     assert response.json()["name"] == "Updated Name"
@@ -67,8 +64,7 @@ async def test_delete_school(authenticated_client):
     """Test deleting a school"""
     # Create a school
     create_response = await authenticated_client.post(
-        "/api/schools/",
-        json={"name": "To Be Deleted"}
+        "/api/schools/", json={"name": "To Be Deleted"}
     )
     school_id = create_response.json()["id"]
 

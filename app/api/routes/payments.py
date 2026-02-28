@@ -4,14 +4,16 @@ Payment API Routes
 This module defines all HTTP endpoints for payment management operations.
 All routes use dependency injection for services and follow RESTful conventions.
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from typing import List, Optional
-from decimal import Decimal
 
+from decimal import Decimal
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
+from app.api.dependencies import get_payment_service
+from app.core.security import get_current_active_user
 from app.schemas import Payment, PaymentCreate, PaymentUpdate, User
 from app.services.payment_service import PaymentService
-from app.core.security import get_current_active_user
-from app.api.dependencies import get_payment_service
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -20,7 +22,7 @@ router = APIRouter(prefix="/payments", tags=["payments"])
 async def create_payment(
     payment: PaymentCreate,
     service: PaymentService = Depends(get_payment_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Create a new payment for an invoice. 🔒 Requires authentication.
@@ -45,15 +47,11 @@ async def create_payment(
         created_payment = await service.create_payment(payment)
         if not created_payment:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Invoice not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found"
             )
         return created_payment
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("", response_model=List[Payment])
@@ -62,7 +60,7 @@ async def list_payments(
     limit: int = 100,
     invoice_id: Optional[int] = Query(None, description="Filter by invoice ID"),
     service: PaymentService = Depends(get_payment_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List all payments with pagination and optional filtering. 🔒 Requires authentication.
@@ -83,7 +81,7 @@ async def list_payments(
 async def get_payment(
     payment_id: int,
     service: PaymentService = Depends(get_payment_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get a specific payment by ID. 🔒 Requires authentication.
@@ -101,8 +99,7 @@ async def get_payment(
     payment = await service.get_payment(payment_id)
     if not payment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Payment not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found"
         )
     return payment
 
@@ -112,7 +109,7 @@ async def update_payment(
     payment_id: int,
     payment: PaymentUpdate,
     service: PaymentService = Depends(get_payment_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Update a payment's information. 🔒 Requires authentication.
@@ -135,8 +132,7 @@ async def update_payment(
     updated_payment = await service.update_payment(payment_id, payment)
     if not updated_payment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Payment not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found"
         )
     return updated_payment
 
@@ -145,7 +141,7 @@ async def update_payment(
 async def delete_payment(
     payment_id: int,
     service: PaymentService = Depends(get_payment_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Delete a payment. 🔒 Requires authentication.
@@ -166,8 +162,7 @@ async def delete_payment(
     success = await service.delete_payment(payment_id)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Payment not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found"
         )
     return None
 
@@ -176,7 +171,7 @@ async def delete_payment(
 async def get_invoice_remaining_balance(
     invoice_id: int,
     service: PaymentService = Depends(get_payment_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Calculate the remaining balance for an invoice.
@@ -194,10 +189,6 @@ async def get_invoice_remaining_balance(
     remaining_balance = await service.get_invoice_remaining_balance(invoice_id)
     if remaining_balance is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invoice not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found"
         )
-    return {
-        "invoice_id": invoice_id,
-        "remaining_balance": remaining_balance
-    }
+    return {"invoice_id": invoice_id, "remaining_balance": remaining_balance}

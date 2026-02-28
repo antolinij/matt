@@ -4,21 +4,21 @@ Authentication API Routes
 This module defines all HTTP endpoints for authentication operations including
 registration, login, token refresh, and user profile management.
 """
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.schemas import User, UserCreate, Token, RefreshTokenRequest
-from app.services.auth_service import AuthService
-from app.core.security import get_current_active_user
 from app.api.dependencies import get_auth_service
+from app.core.security import get_current_active_user
+from app.schemas import RefreshTokenRequest, Token, User, UserCreate
+from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
 @router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
 async def register(
-    user_data: UserCreate,
-    auth_service: AuthService = Depends(get_auth_service)
+    user_data: UserCreate, auth_service: AuthService = Depends(get_auth_service)
 ):
     """
     Register a new user account.
@@ -40,7 +40,7 @@ async def register(
 @router.post("/login", response_model=Token)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """
     Login and receive access and refresh tokens.
@@ -63,7 +63,7 @@ async def login(
 @router.post("/refresh", response_model=Token)
 async def refresh_token(
     refresh_request: RefreshTokenRequest,
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """
     Get a new access token using a refresh token.
@@ -86,9 +86,7 @@ async def refresh_token(
 
 
 @router.get("/me", response_model=User)
-async def get_current_user_info(
-    current_user: User = Depends(get_current_active_user)
-):
+async def get_current_user_info(current_user: User = Depends(get_current_active_user)):
     """
     Get the current authenticated user's information.
 

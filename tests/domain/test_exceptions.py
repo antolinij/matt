@@ -3,17 +3,15 @@ Tests for Custom Exception Classes
 
 Tests that custom exceptions are created correctly with proper attributes.
 """
+
 import pytest
 
-from app.core.exceptions import (
-    RepositoryException,
-    DuplicateRecordException,
-    RecordNotFoundException,
-    DatabaseConnectionException,
-    ForeignKeyViolationException,
-    InvalidDataException,
-    DatabaseOperationException,
-)
+from app.core.exceptions import (DatabaseConnectionException,
+                                 DatabaseOperationException,
+                                 DuplicateRecordException,
+                                 ForeignKeyViolationException,
+                                 InvalidDataException, RecordNotFoundException,
+                                 RepositoryException)
 
 
 class TestRepositoryException:
@@ -109,8 +107,7 @@ class TestInvalidDataException:
     def test_payment_exceeds_balance_exception(self):
         """Test payment exceeds balance exception"""
         exc = InvalidDataException(
-            "Payment",
-            "Payment amount (150.00) exceeds remaining balance (100.00)"
+            "Payment", "Payment amount (150.00) exceeds remaining balance (100.00)"
         )
         assert "Payment amount" in exc.message
         assert "exceeds remaining balance" in exc.message
@@ -137,7 +134,9 @@ class TestDatabaseOperationException:
 
     def test_database_operation_exception_creation(self):
         """Test creating database operation exception"""
-        exc = DatabaseOperationException("create", "User", "Unique constraint violation")
+        exc = DatabaseOperationException(
+            "create", "User", "Unique constraint violation"
+        )
         assert exc.message == "Failed to create User"
         assert exc.operation == "create"
         assert exc.resource == "User"

@@ -3,24 +3,32 @@ Unit tests for InvoiceRepository
 
 Tests CRUD operations, invoice number generation, and status updates for invoices.
 """
+
+from datetime import date
+from decimal import Decimal
+
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from decimal import Decimal
-from datetime import date
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 
 from app.core.database import Base
-from app.db.models import School, Student, Invoice, Payment, InvoiceStatus, PaymentMethod
-from app.repositories.school_repository import SchoolRepository
-from app.repositories.student_repository import StudentRepository
+from app.core.exceptions import ForeignKeyViolationException
+from app.db.models import (Invoice, InvoiceStatus, Payment, PaymentMethod,
+                           School, Student)
 from app.repositories.invoice_repository import InvoiceRepository
 from app.repositories.payment_repository import PaymentRepository
-from app.core.exceptions import ForeignKeyViolationException
+from app.repositories.school_repository import SchoolRepository
+from app.repositories.student_repository import StudentRepository
 
 # Test database
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test_invoice_repository.db"
-engine = create_async_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+engine = create_async_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
+TestingSessionLocal = async_sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
@@ -51,11 +59,7 @@ async def school(db_session):
 async def student(db_session, school):
     """Create a test student"""
     repo = StudentRepository(db_session)
-    return await repo.create(
-        school_id=school.id,
-        first_name="John",
-        last_name="Doe"
-    )
+    return await repo.create(school_id=school.id, first_name="John", last_name="Doe")
 
 
 class TestInvoiceNumberGeneration:
@@ -78,7 +82,7 @@ class TestInvoiceNumberGeneration:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         assert invoice1.invoice_number == "INV-000001"
 
@@ -87,7 +91,7 @@ class TestInvoiceNumberGeneration:
             student_id=student.id,
             amount=Decimal("200.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         assert invoice2.invoice_number == "INV-000002"
 
@@ -96,7 +100,7 @@ class TestInvoiceNumberGeneration:
             student_id=student.id,
             amount=Decimal("300.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         assert invoice3.invoice_number == "INV-000003"
 
@@ -111,7 +115,7 @@ class TestInvoiceNumberGeneration:
                 student_id=student.id,
                 amount=Decimal("100.00"),
                 due_date=date(2024, 12, 31),
-                issue_date=date(2024, 1, 1)
+                issue_date=date(2024, 1, 1),
             )
 
         # Last invoice should be INV-000010
@@ -131,7 +135,7 @@ class TestInvoiceRepositoryCRUD:
             due_date=date(2024, 12, 31),
             issue_date=date(2024, 1, 1),
             description="Test invoice",
-            status=InvoiceStatus.PENDING
+            status=InvoiceStatus.PENDING,
         )
 
         assert invoice.id is not None
@@ -151,7 +155,7 @@ class TestInvoiceRepositoryCRUD:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         assert invoice.id is not None
@@ -168,7 +172,7 @@ class TestInvoiceRepositoryCRUD:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         retrieved_invoice = await repo.get(created_invoice.id)
@@ -194,19 +198,19 @@ class TestInvoiceRepositoryCRUD:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         await repo.create(
             student_id=student.id,
             amount=Decimal("200.00"),
             due_date=date(2024, 11, 30),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         await repo.create(
             student_id=student.id,
             amount=Decimal("300.00"),
             due_date=date(2024, 10, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         invoices = await repo.get_all()
@@ -225,14 +229,10 @@ class TestInvoiceRepositoryCRUD:
 
         # Create two students
         student1 = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
         student2 = await student_repo.create(
-            school_id=school.id,
-            first_name="Jane",
-            last_name="Smith"
+            school_id=school.id, first_name="Jane", last_name="Smith"
         )
 
         # Create invoices for both students
@@ -240,19 +240,19 @@ class TestInvoiceRepositoryCRUD:
             student_id=student1.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         await invoice_repo.create(
             student_id=student1.id,
             amount=Decimal("200.00"),
             due_date=date(2024, 11, 30),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         await invoice_repo.create(
             student_id=student2.id,
             amount=Decimal("300.00"),
             due_date=date(2024, 10, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # Get invoices for student1 only
@@ -273,7 +273,7 @@ class TestInvoiceRepositoryCRUD:
                 student_id=student.id,
                 amount=Decimal(f"{(i+1) * 100}.00"),
                 due_date=date(2024, 12, 31),
-                issue_date=date(2024, 1, 1)
+                issue_date=date(2024, 1, 1),
             )
 
         # Get first 2 invoices
@@ -296,7 +296,7 @@ class TestInvoiceRepositoryCRUD:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         updated_invoice = await repo.update(
@@ -304,7 +304,7 @@ class TestInvoiceRepositoryCRUD:
             amount=Decimal("200.00"),
             due_date=date(2024, 11, 30),
             description="Updated invoice",
-            status=InvoiceStatus.PAID
+            status=InvoiceStatus.PAID,
         )
 
         assert updated_invoice is not None
@@ -323,7 +323,7 @@ class TestInvoiceRepositoryCRUD:
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
             issue_date=date(2024, 1, 1),
-            description="Original"
+            description="Original",
         )
 
         updated_invoice = await repo.update(invoice.id, description="Updated")
@@ -347,7 +347,7 @@ class TestInvoiceRepositoryCRUD:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         result = await repo.delete(invoice.id)
@@ -376,7 +376,7 @@ class TestInvoicePaidAmount:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         paid_amount = await invoice_repo.get_paid_amount(invoice.id)
@@ -392,13 +392,13 @@ class TestInvoicePaidAmount:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         paid_amount = await invoice_repo.get_paid_amount(invoice.id)
@@ -414,23 +414,23 @@ class TestInvoicePaidAmount:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("20.00"),
-            payment_date=date(2024, 1, 20)
+            payment_date=date(2024, 1, 20),
         )
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("25.00"),
-            payment_date=date(2024, 1, 25)
+            payment_date=date(2024, 1, 25),
         )
 
         paid_amount = await invoice_repo.get_paid_amount(invoice.id)
@@ -446,13 +446,13 @@ class TestInvoicePaidAmount:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("100.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         paid_amount = await invoice_repo.get_paid_amount(invoice.id)
@@ -471,7 +471,7 @@ class TestInvoiceStatusUpdate:
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
             issue_date=date(2024, 1, 1),
-            status=InvoiceStatus.PENDING
+            status=InvoiceStatus.PENDING,
         )
 
         updated_invoice = await repo.update_status_based_on_payments(invoice.id)
@@ -479,7 +479,9 @@ class TestInvoiceStatusUpdate:
         assert updated_invoice.status == InvoiceStatus.PENDING
 
     @pytest.mark.asyncio
-    async def test_update_status_partial_payment_stays_pending(self, db_session, student):
+    async def test_update_status_partial_payment_stays_pending(
+        self, db_session, student
+    ):
         """Test that invoice with partial payment stays PENDING"""
         invoice_repo = InvoiceRepository(db_session)
         payment_repo = PaymentRepository(db_session)
@@ -489,13 +491,13 @@ class TestInvoiceStatusUpdate:
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
             issue_date=date(2024, 1, 1),
-            status=InvoiceStatus.PENDING
+            status=InvoiceStatus.PENDING,
         )
 
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         updated_invoice = await invoice_repo.update_status_based_on_payments(invoice.id)
@@ -513,13 +515,13 @@ class TestInvoiceStatusUpdate:
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
             issue_date=date(2024, 1, 1),
-            status=InvoiceStatus.PENDING
+            status=InvoiceStatus.PENDING,
         )
 
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("100.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         updated_invoice = await invoice_repo.update_status_based_on_payments(invoice.id)
@@ -527,7 +529,9 @@ class TestInvoiceStatusUpdate:
         assert updated_invoice.status == InvoiceStatus.PAID
 
     @pytest.mark.asyncio
-    async def test_update_status_multiple_payments_reaching_total(self, db_session, student):
+    async def test_update_status_multiple_payments_reaching_total(
+        self, db_session, student
+    ):
         """Test that invoice becomes PAID when multiple payments reach total"""
         invoice_repo = InvoiceRepository(db_session)
         payment_repo = PaymentRepository(db_session)
@@ -537,14 +541,14 @@ class TestInvoiceStatusUpdate:
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
             issue_date=date(2024, 1, 1),
-            status=InvoiceStatus.PENDING
+            status=InvoiceStatus.PENDING,
         )
 
         # First payment - should stay PENDING
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
         updated_invoice = await invoice_repo.update_status_based_on_payments(invoice.id)
         assert updated_invoice.status == InvoiceStatus.PENDING
@@ -553,7 +557,7 @@ class TestInvoiceStatusUpdate:
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("40.00"),
-            payment_date=date(2024, 1, 20)
+            payment_date=date(2024, 1, 20),
         )
         updated_invoice = await invoice_repo.update_status_based_on_payments(invoice.id)
         assert updated_invoice.status == InvoiceStatus.PENDING
@@ -562,7 +566,7 @@ class TestInvoiceStatusUpdate:
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 25)
+            payment_date=date(2024, 1, 25),
         )
         updated_invoice = await invoice_repo.update_status_based_on_payments(invoice.id)
         assert updated_invoice.status == InvoiceStatus.PAID
@@ -585,13 +589,13 @@ class TestInvoiceStatusUpdate:
             amount=Decimal("123.45"),
             due_date=date(2024, 12, 31),
             issue_date=date(2024, 1, 1),
-            status=InvoiceStatus.PENDING
+            status=InvoiceStatus.PENDING,
         )
 
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("123.45"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         updated_invoice = await invoice_repo.update_status_based_on_payments(invoice.id)

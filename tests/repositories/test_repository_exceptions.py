@@ -3,31 +3,37 @@ Tests for Repository Exception Handling
 
 Tests that repositories correctly raise custom exceptions when database errors occur.
 """
+
+from datetime import date, datetime
+from decimal import Decimal
+
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from decimal import Decimal
-from datetime import date, datetime
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 
 from app.core.database import Base
-from app.db.models import School, Student, User, Invoice, Payment, StudentStatus, InvoiceStatus, PaymentMethod, UserRole
-from app.repositories.user_repository import UserRepository
-from app.repositories.school_repository import SchoolRepository
-from app.repositories.student_repository import StudentRepository
+from app.core.exceptions import (DatabaseConnectionException,
+                                 DatabaseOperationException,
+                                 DuplicateRecordException,
+                                 ForeignKeyViolationException,
+                                 InvalidDataException)
+from app.db.models import (Invoice, InvoiceStatus, Payment, PaymentMethod,
+                           School, Student, StudentStatus, User, UserRole)
 from app.repositories.invoice_repository import InvoiceRepository
 from app.repositories.payment_repository import PaymentRepository
-from app.core.exceptions import (
-    DuplicateRecordException,
-    ForeignKeyViolationException,
-    InvalidDataException,
-    DatabaseConnectionException,
-    DatabaseOperationException,
-)
+from app.repositories.school_repository import SchoolRepository
+from app.repositories.student_repository import StudentRepository
+from app.repositories.user_repository import UserRepository
 
 # Test database
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test_repository_exceptions.db"
-engine = create_async_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+engine = create_async_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
+TestingSessionLocal = async_sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
@@ -64,7 +70,7 @@ class TestUserRepositoryExceptions:
             username="johndoe",
             email="john@example.com",
             hashed_password="hashed123",
-            role=UserRole.USER
+            role=UserRole.USER,
         )
         await repo.create(user1)
 
@@ -73,7 +79,7 @@ class TestUserRepositoryExceptions:
             username="johndoe",  # Duplicate username
             email="different@example.com",
             hashed_password="hashed456",
-            role=UserRole.USER
+            role=UserRole.USER,
         )
 
         with pytest.raises(DuplicateRecordException) as exc_info:
@@ -93,7 +99,7 @@ class TestUserRepositoryExceptions:
             username="user1",
             email="duplicate@example.com",
             hashed_password="hashed123",
-            role=UserRole.USER
+            role=UserRole.USER,
         )
         await repo.create(user1)
 
@@ -102,7 +108,7 @@ class TestUserRepositoryExceptions:
             username="user2",
             email="duplicate@example.com",  # Duplicate email
             hashed_password="hashed456",
-            role=UserRole.USER
+            role=UserRole.USER,
         )
 
         with pytest.raises(DuplicateRecordException) as exc_info:
@@ -118,8 +124,18 @@ class TestUserRepositoryExceptions:
         repo = UserRepository(db_session)
 
         # Create two users
-        user1 = User(username="user1", email="user1@example.com", hashed_password="hash1", role=UserRole.USER)
-        user2 = User(username="user2", email="user2@example.com", hashed_password="hash2", role=UserRole.USER)
+        user1 = User(
+            username="user1",
+            email="user1@example.com",
+            hashed_password="hash1",
+            role=UserRole.USER,
+        )
+        user2 = User(
+            username="user2",
+            email="user2@example.com",
+            hashed_password="hash2",
+            role=UserRole.USER,
+        )
 
         user1 = await repo.create(user1)
         user2 = await repo.create(user2)
@@ -140,10 +156,7 @@ class TestSchoolRepositoryExceptions:
     async def test_create_school_success(self, db_session):
         """Test successful school creation"""
         repo = SchoolRepository(db_session)
-        school = await repo.create(
-            name="Test School",
-            email="school@example.com"
-        )
+        school = await repo.create(name="Test School", email="school@example.com")
         assert school.id is not None
         assert school.name == "Test School"
 
@@ -152,15 +165,15 @@ class TestStudentRepositoryExceptions:
     """Tests for StudentRepository exception handling"""
 
     @pytest.mark.asyncio
-    async def test_create_student_with_invalid_school_id_raises_exception(self, db_session):
+    async def test_create_student_with_invalid_school_id_raises_exception(
+        self, db_session
+    ):
         """Test that creating student with non-existent school_id raises ForeignKeyViolationException"""
         repo = StudentRepository(db_session)
 
         with pytest.raises(ForeignKeyViolationException) as exc_info:
             await repo.create(
-                school_id=999,  # Non-existent school
-                first_name="John",
-                last_name="Doe"
+                school_id=999, first_name="John", last_name="Doe"  # Non-existent school
             )
 
         assert exc_info.value.resource == "Student"
@@ -178,16 +191,16 @@ class TestStudentRepositoryExceptions:
 
         # Create student with valid school_id
         student = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
 
         assert student.id is not None
         assert student.school_id == school.id
 
     @pytest.mark.asyncio
-    async def test_update_student_to_invalid_school_id_raises_exception(self, db_session):
+    async def test_update_student_to_invalid_school_id_raises_exception(
+        self, db_session
+    ):
         """Test that updating student to non-existent school_id raises ForeignKeyViolationException"""
         school_repo = SchoolRepository(db_session)
         student_repo = StudentRepository(db_session)
@@ -195,9 +208,7 @@ class TestStudentRepositoryExceptions:
         # Create school and student
         school = await school_repo.create(name="Test School")
         student = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
 
         # Try to update to invalid school_id
@@ -211,7 +222,9 @@ class TestInvoiceRepositoryExceptions:
     """Tests for InvoiceRepository exception handling"""
 
     @pytest.mark.asyncio
-    async def test_create_invoice_with_invalid_student_id_raises_exception(self, db_session):
+    async def test_create_invoice_with_invalid_student_id_raises_exception(
+        self, db_session
+    ):
         """Test that creating invoice with non-existent student_id raises ForeignKeyViolationException"""
         repo = InvoiceRepository(db_session)
 
@@ -220,7 +233,7 @@ class TestInvoiceRepositoryExceptions:
                 student_id=999,  # Non-existent student
                 amount=Decimal("100.00"),
                 due_date=date(2024, 12, 31),
-                issue_date=date(2024, 1, 1)
+                issue_date=date(2024, 1, 1),
             )
 
         assert exc_info.value.resource == "Invoice"
@@ -237,9 +250,7 @@ class TestInvoiceRepositoryExceptions:
         # Create school and student
         school = await school_repo.create(name="Test School")
         student = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
 
         # Create invoice with valid student_id
@@ -247,7 +258,7 @@ class TestInvoiceRepositoryExceptions:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         assert invoice.id is not None
@@ -259,7 +270,9 @@ class TestPaymentRepositoryExceptions:
     """Tests for PaymentRepository exception handling"""
 
     @pytest.mark.asyncio
-    async def test_create_payment_with_invalid_invoice_id_returns_none(self, db_session):
+    async def test_create_payment_with_invalid_invoice_id_returns_none(
+        self, db_session
+    ):
         """Test that creating payment with non-existent invoice_id returns None"""
         repo = PaymentRepository(db_session)
 
@@ -267,7 +280,7 @@ class TestPaymentRepositoryExceptions:
         payment = await repo.create(
             invoice_id=999,  # Non-existent invoice
             amount=Decimal("50.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         assert payment is None
@@ -283,15 +296,13 @@ class TestPaymentRepositoryExceptions:
         # Create school, student, and invoice
         school = await school_repo.create(name="Test School")
         student = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
         invoice = await invoice_repo.create(
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # Try to create payment exceeding invoice amount
@@ -299,7 +310,7 @@ class TestPaymentRepositoryExceptions:
             await payment_repo.create(
                 invoice_id=invoice.id,
                 amount=Decimal("150.00"),  # Exceeds 100.00
-                payment_date=date(2024, 1, 15)
+                payment_date=date(2024, 1, 15),
             )
 
         assert exc_info.value.resource == "Payment"
@@ -316,22 +327,20 @@ class TestPaymentRepositoryExceptions:
         # Create school, student, and invoice
         school = await school_repo.create(name="Test School")
         student = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
         invoice = await invoice_repo.create(
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # Create payment matching exact balance
         payment = await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("100.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         assert payment is not None
@@ -342,7 +351,9 @@ class TestPaymentRepositoryExceptions:
         assert invoice.status == InvoiceStatus.PAID
 
     @pytest.mark.asyncio
-    async def test_create_partial_payment_then_exceeding_payment_raises_exception(self, db_session):
+    async def test_create_partial_payment_then_exceeding_payment_raises_exception(
+        self, db_session
+    ):
         """Test that partial payment followed by exceeding payment raises exception"""
         school_repo = SchoolRepository(db_session)
         student_repo = StudentRepository(db_session)
@@ -352,22 +363,20 @@ class TestPaymentRepositoryExceptions:
         # Create school, student, and invoice
         school = await school_repo.create(name="Test School")
         student = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
         invoice = await invoice_repo.create(
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # Create first partial payment
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("60.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         # Try to create second payment exceeding remaining balance
@@ -375,7 +384,7 @@ class TestPaymentRepositoryExceptions:
             await payment_repo.create(
                 invoice_id=invoice.id,
                 amount=Decimal("50.00"),  # Would total 110.00, exceeds 100.00
-                payment_date=date(2024, 1, 20)
+                payment_date=date(2024, 1, 20),
             )
 
         assert "exceeds remaining balance" in exc_info.value.details
@@ -391,11 +400,21 @@ class TestRepositoryRollback:
         repo = UserRepository(db_session)
 
         # Create first user
-        user1 = User(username="test", email="test@example.com", hashed_password="hash", role=UserRole.USER)
+        user1 = User(
+            username="test",
+            email="test@example.com",
+            hashed_password="hash",
+            role=UserRole.USER,
+        )
         await repo.create(user1)
 
         # Try to create duplicate
-        user2 = User(username="test", email="different@example.com", hashed_password="hash", role=UserRole.USER)
+        user2 = User(
+            username="test",
+            email="different@example.com",
+            hashed_password="hash",
+            role=UserRole.USER,
+        )
 
         try:
             await repo.create(user2)
@@ -413,11 +432,7 @@ class TestRepositoryRollback:
 
         # Try to create student with invalid school_id
         try:
-            await student_repo.create(
-                school_id=999,
-                first_name="John",
-                last_name="Doe"
-            )
+            await student_repo.create(school_id=999, first_name="John", last_name="Doe")
         except ForeignKeyViolationException:
             pass
 
@@ -435,12 +450,14 @@ class TestRepositoryRollback:
 
         # Create school, student, and invoice
         school = await school_repo.create(name="Test School")
-        student = await student_repo.create(school_id=school.id, first_name="John", last_name="Doe")
+        student = await student_repo.create(
+            school_id=school.id, first_name="John", last_name="Doe"
+        )
         invoice = await invoice_repo.create(
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # Try to create exceeding payment
@@ -448,7 +465,7 @@ class TestRepositoryRollback:
             await payment_repo.create(
                 invoice_id=invoice.id,
                 amount=Decimal("150.00"),
-                payment_date=date(2024, 1, 15)
+                payment_date=date(2024, 1, 15),
             )
         except InvalidDataException:
             pass

@@ -11,7 +11,9 @@ This module defines custom exceptions that provide:
 class RepositoryException(Exception):
     """Base exception for all repository-level errors."""
 
-    def __init__(self, message: str = "A repository error occurred", details: str = None):
+    def __init__(
+        self, message: str = "A repository error occurred", details: str = None
+    ):
         self.message = message
         self.details = details
         super().__init__(self.message)

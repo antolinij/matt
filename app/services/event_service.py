@@ -4,8 +4,10 @@ Event Service
 Publishes events to message queue for asynchronous processing.
 Used to decouple payment/invoice creation from account movement tracking.
 """
-from typing import Dict, Any, Optional
+
 import logging
+from typing import Any, Dict, Optional
+
 from arq import create_pool
 from arq.connections import RedisSettings
 
@@ -30,9 +32,9 @@ class EventService:
         if self._pool is None:
             self._pool = await create_pool(
                 RedisSettings(
-                    host=getattr(settings, 'REDIS_HOST', 'localhost'),
-                    port=getattr(settings, 'REDIS_PORT', 6379),
-                    database=getattr(settings, 'REDIS_DB', 0),
+                    host=getattr(settings, "REDIS_HOST", "localhost"),
+                    port=getattr(settings, "REDIS_PORT", 6379),
+                    database=getattr(settings, "REDIS_DB", 0),
                 )
             )
         return self._pool
@@ -44,7 +46,7 @@ class EventService:
         student_id: int,
         school_id: int,
         amount: float,
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
     ) -> None:
         """
         Publish payment created event.
@@ -60,7 +62,7 @@ class EventService:
         try:
             pool = await self.get_pool()
             await pool.enqueue_job(
-                'handle_payment_created',
+                "handle_payment_created",
                 payment_id=payment_id,
                 invoice_id=invoice_id,
                 student_id=student_id,
@@ -80,7 +82,7 @@ class EventService:
         student_id: int,
         school_id: int,
         amount: float,
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
     ) -> None:
         """
         Publish invoice created event.
@@ -95,7 +97,7 @@ class EventService:
         try:
             pool = await self.get_pool()
             await pool.enqueue_job(
-                'handle_invoice_created',
+                "handle_invoice_created",
                 invoice_id=invoice_id,
                 student_id=student_id,
                 school_id=school_id,
@@ -113,7 +115,7 @@ class EventService:
         school_id: int,
         old_amount: float,
         new_amount: float,
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
     ) -> None:
         """
         Publish invoice updated event.
@@ -129,7 +131,7 @@ class EventService:
         try:
             pool = await self.get_pool()
             await pool.enqueue_job(
-                'handle_invoice_updated',
+                "handle_invoice_updated",
                 invoice_id=invoice_id,
                 student_id=student_id,
                 school_id=school_id,
@@ -142,10 +144,7 @@ class EventService:
             logger.error(f"Failed to publish invoice_updated event: {e}")
 
     async def publish_student_enrolled(
-        self,
-        student_id: int,
-        school_id: int,
-        user_id: Optional[int] = None
+        self, student_id: int, school_id: int, user_id: Optional[int] = None
     ) -> None:
         """
         Publish student enrolled event.
@@ -158,7 +157,7 @@ class EventService:
         try:
             pool = await self.get_pool()
             await pool.enqueue_job(
-                'handle_student_enrolled',
+                "handle_student_enrolled",
                 student_id=student_id,
                 school_id=school_id,
                 user_id=user_id,
@@ -173,7 +172,7 @@ class EventService:
         school_id: int,
         old_status: str,
         new_status: str,
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
     ) -> None:
         """
         Publish student status changed event.
@@ -188,14 +187,16 @@ class EventService:
         try:
             pool = await self.get_pool()
             await pool.enqueue_job(
-                'handle_student_status_changed',
+                "handle_student_status_changed",
                 student_id=student_id,
                 school_id=school_id,
                 old_status=old_status,
                 new_status=new_status,
                 user_id=user_id,
             )
-            logger.info(f"Published student_status_changed event for student {student_id}")
+            logger.info(
+                f"Published student_status_changed event for student {student_id}"
+            )
         except Exception as e:
             logger.error(f"Failed to publish student_status_changed event: {e}")
 

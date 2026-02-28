@@ -1,13 +1,19 @@
 """User ORM model for authentication"""
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum as SQLEnum
-from sqlalchemy.orm import relationship
+
 from datetime import datetime
 from enum import Enum
+
+from sqlalchemy import Boolean, Column, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
 
 class UserRole(str, Enum):
     """User role enumeration"""
+
     ADMIN = "admin"
     SCHOOL_ADMIN = "school_admin"
     TEACHER = "teacher"
@@ -16,6 +22,7 @@ class UserRole(str, Enum):
 
 class User(Base):
     """User database model for authentication and authorization"""
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -31,7 +38,9 @@ class User(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     last_login = Column(DateTime, nullable=True)
 
     def __repr__(self):

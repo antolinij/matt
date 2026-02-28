@@ -1,8 +1,10 @@
 """School service for business logic"""
+
 from typing import List, Optional
-from app.repositories.school_repository import SchoolRepository
-from app.schemas import School, SchoolCreate, SchoolUpdate, SchoolAccountStatus
+
 from app.core.cache import cached, invalidate_cache_pattern
+from app.repositories.school_repository import SchoolRepository
+from app.schemas import School, SchoolAccountStatus, SchoolCreate, SchoolUpdate
 
 
 class SchoolService:
@@ -25,7 +27,7 @@ class SchoolService:
             name=schema.name,
             address=schema.address,
             phone=schema.phone,
-            email=schema.email
+            email=schema.email,
         )
 
         # Invalidate list cache when creating new school
@@ -64,7 +66,9 @@ class SchoolService:
         db_schools = await self.repository.get_all(skip=skip, limit=limit)
         return [School.model_validate(school) for school in db_schools]
 
-    async def update_school(self, school_id: int, schema: SchoolUpdate) -> Optional[School]:
+    async def update_school(
+        self, school_id: int, schema: SchoolUpdate
+    ) -> Optional[School]:
         """
         Update a school
 
@@ -121,7 +125,9 @@ class SchoolService:
 
         return result
 
-    @cached(prefix="school:account", ttl=60)  # Cache for 1 minute (financial data changes frequently)
+    @cached(
+        prefix="school:account", ttl=60
+    )  # Cache for 1 minute (financial data changes frequently)
     async def get_account_status(self, school_id: int) -> Optional[SchoolAccountStatus]:
         """
         Get account status for a school (cached - 1 minute TTL)
@@ -151,7 +157,9 @@ class SchoolService:
         """
         from app.schemas import StudentAccountStatus
 
-        status_data = await self.repository.get_student_account_status(school_id, student_id)
+        status_data = await self.repository.get_student_account_status(
+            school_id, student_id
+        )
         if not status_data:
             return None
         return StudentAccountStatus.model_validate(status_data)

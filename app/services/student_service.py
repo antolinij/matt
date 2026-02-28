@@ -1,15 +1,20 @@
 """Student service for business logic"""
+
 from typing import List, Optional
-from app.repositories.student_repository import StudentRepository
-from app.repositories.school_repository import SchoolRepository
-from app.schemas import Student, StudentCreate, StudentUpdate, StudentAccountStatus
+
 from app.core.exceptions import ForeignKeyViolationException
+from app.repositories.school_repository import SchoolRepository
+from app.repositories.student_repository import StudentRepository
+from app.schemas import (Student, StudentAccountStatus, StudentCreate,
+                         StudentUpdate)
 
 
 class StudentService:
     """Service for Student business logic"""
 
-    def __init__(self, repository: StudentRepository, school_repository: SchoolRepository):
+    def __init__(
+        self, repository: StudentRepository, school_repository: SchoolRepository
+    ):
         self.repository = repository
         self.school_repository = school_repository
 
@@ -37,7 +42,7 @@ class StudentService:
             last_name=schema.last_name,
             email=schema.email,
             enrollment_date=schema.enrollment_date,
-            status=schema.status
+            status=schema.status,
         )
         return Student.model_validate(db_student)
 
@@ -57,10 +62,7 @@ class StudentService:
         return Student.model_validate(db_student)
 
     async def get_all_students(
-        self,
-        skip: int = 0,
-        limit: int = 100,
-        school_id: Optional[int] = None
+        self, skip: int = 0, limit: int = 100, school_id: Optional[int] = None
     ) -> List[Student]:
         """
         Get all students with pagination and optional school filter
@@ -74,13 +76,13 @@ class StudentService:
             List of Student schemas
         """
         db_students = await self.repository.get_all(
-            skip=skip,
-            limit=limit,
-            school_id=school_id
+            skip=skip, limit=limit, school_id=school_id
         )
         return [Student.model_validate(student) for student in db_students]
 
-    async def update_student(self, student_id: int, schema: StudentUpdate) -> Optional[Student]:
+    async def update_student(
+        self, student_id: int, schema: StudentUpdate
+    ) -> Optional[Student]:
         """
         Update a student
 
@@ -101,10 +103,12 @@ class StudentService:
 
         # If updating school_id, verify new school exists
         update_data = schema.model_dump(exclude_unset=True)
-        if 'school_id' in update_data:
-            new_school = await self.school_repository.get(update_data['school_id'])
+        if "school_id" in update_data:
+            new_school = await self.school_repository.get(update_data["school_id"])
             if not new_school:
-                raise ForeignKeyViolationException("Student", "school_id", update_data["school_id"])
+                raise ForeignKeyViolationException(
+                    "Student", "school_id", update_data["school_id"]
+                )
 
         db_student = await self.repository.update(student_id, **update_data)
         if not db_student:
@@ -132,9 +136,7 @@ class StudentService:
         return await self.repository.delete(student_id)
 
     async def get_account_status(
-        self,
-        student_id: int,
-        school_id: Optional[int] = None
+        self, student_id: int, school_id: Optional[int] = None
     ) -> Optional[StudentAccountStatus]:
         """
         Get account status for a student (all financial data)

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Test script for nested student account-status endpoint"""
-import requests
 import json
+
+import requests
 
 BASE_URL = "http://localhost:8000"
 
@@ -12,7 +13,7 @@ print("=" * 60)
 login_response = requests.post(
     f"{BASE_URL}/api/auth/login",
     data={"username": "testuser", "password": "testpass123"},
-    headers={"Content-Type": "application/x-www-form-urlencoded"}
+    headers={"Content-Type": "application/x-www-form-urlencoded"},
 )
 if login_response.status_code != 200:
     print(f"Login failed: {login_response.status_code}")
@@ -28,8 +29,7 @@ print("2. Test: Valid student (8) in correct school (11)")
 print("=" * 60)
 print("GET /api/schools/11/students/8/account-status")
 response = requests.get(
-    f"{BASE_URL}/api/schools/11/students/8/account-status",
-    headers=headers
+    f"{BASE_URL}/api/schools/11/students/8/account-status", headers=headers
 )
 print(f"Status Code: {response.status_code}")
 if response.status_code == 200:
@@ -49,8 +49,7 @@ print("3. Test: Valid student (8) in WRONG school (5)")
 print("=" * 60)
 print("GET /api/schools/5/students/8/account-status")
 response = requests.get(
-    f"{BASE_URL}/api/schools/5/students/8/account-status",
-    headers=headers
+    f"{BASE_URL}/api/schools/5/students/8/account-status", headers=headers
 )
 print(f"Status Code: {response.status_code}")
 if response.status_code == 404:
@@ -67,8 +66,7 @@ print("4. Test: Invalid school (999) with valid student (8)")
 print("=" * 60)
 print("GET /api/schools/999/students/8/account-status")
 response = requests.get(
-    f"{BASE_URL}/api/schools/999/students/8/account-status",
-    headers=headers
+    f"{BASE_URL}/api/schools/999/students/8/account-status", headers=headers
 )
 print(f"Status Code: {response.status_code}")
 if response.status_code == 404:
@@ -85,8 +83,7 @@ print("5. Test: Valid school (11) with invalid student (999)")
 print("=" * 60)
 print("GET /api/schools/11/students/999/account-status")
 response = requests.get(
-    f"{BASE_URL}/api/schools/11/students/999/account-status",
-    headers=headers
+    f"{BASE_URL}/api/schools/11/students/999/account-status", headers=headers
 )
 print(f"Status Code: {response.status_code}")
 if response.status_code == 404:

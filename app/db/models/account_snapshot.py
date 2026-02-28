@@ -7,17 +7,22 @@ This enables answering questions like:
 - What was the outstanding balance at the end of last quarter?
 - Show me monthly revenue for the past year
 """
-from sqlalchemy import Column, Integer, Date, Numeric, DateTime, Enum as SQLEnum, Index, UniqueConstraint
-from sqlalchemy.sql import func
-from datetime import datetime, date
-from decimal import Decimal
+
 import enum
+from datetime import date, datetime
+from decimal import Decimal
+
+from sqlalchemy import Column, Date, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Index, Integer, Numeric, UniqueConstraint
+from sqlalchemy.sql import func
 
 from app.core.database import Base
 
 
 class SnapshotType(str, enum.Enum):
     """Frequency of snapshot"""
+
     DAILY = "daily"
     WEEKLY = "weekly"
     MONTHLY = "monthly"
@@ -27,6 +32,7 @@ class SnapshotType(str, enum.Enum):
 
 class EntityType(str, enum.Enum):
     """Type of entity the snapshot is for"""
+
     SCHOOL = "school"
     STUDENT = "student"
 
@@ -41,6 +47,7 @@ class AccountSnapshot(Base):
     - Reporting dashboards
     - Time-series data
     """
+
     __tablename__ = "account_snapshots"
 
     # Primary key
@@ -50,7 +57,9 @@ class AccountSnapshot(Base):
     entity_type = Column(SQLEnum(EntityType), nullable=False)
     entity_id = Column(Integer, nullable=False)  # school_id or student_id
     snapshot_date = Column(Date, nullable=False)  # Date this snapshot represents
-    snapshot_type = Column(SQLEnum(SnapshotType), nullable=False, default=SnapshotType.DAILY)
+    snapshot_type = Column(
+        SQLEnum(SnapshotType), nullable=False, default=SnapshotType.DAILY
+    )
 
     # Student counts (for schools only, NULL for students)
     total_students = Column(Integer, nullable=True)
@@ -73,27 +82,26 @@ class AccountSnapshot(Base):
     payments_this_period = Column(Integer, nullable=True)  # Since last snapshot
 
     # Metadata
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, server_default=func.now())
+    created_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, server_default=func.now()
+    )
 
     # Constraints
     __table_args__ = (
         # One snapshot per entity per date per type
         UniqueConstraint(
-            'entity_type',
-            'entity_id',
-            'snapshot_date',
-            'snapshot_type',
-            name='uq_snapshot_entity_date_type'
+            "entity_type",
+            "entity_id",
+            "snapshot_date",
+            "snapshot_type",
+            name="uq_snapshot_entity_date_type",
         ),
-
         # Fast queries by entity and date
-        Index('ix_snapshots_entity_date', 'entity_type', 'entity_id', 'snapshot_date'),
-
+        Index("ix_snapshots_entity_date", "entity_type", "entity_id", "snapshot_date"),
         # Fast queries by snapshot type
-        Index('ix_snapshots_type_date', 'snapshot_type', 'snapshot_date'),
-
+        Index("ix_snapshots_type_date", "snapshot_type", "snapshot_date"),
         # Fast queries by date range
-        Index('ix_snapshots_date', 'snapshot_date'),
+        Index("ix_snapshots_date", "snapshot_date"),
     )
 
     def __repr__(self):

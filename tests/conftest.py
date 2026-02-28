@@ -1,20 +1,26 @@
 """Pytest configuration and fixtures"""
+
+import asyncio
+
 import pytest
 import pytest_asyncio
-import asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 
-from app.main import app
 from app.core.database import Base, get_db
-from app.db.models import User
 from app.core.security import get_password_hash
-
+from app.db.models import User
+from app.main import app
 
 # Test database setup
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
-engine = create_async_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+engine = create_async_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
+TestingSessionLocal = async_sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 # Override dependency
@@ -71,6 +77,7 @@ async def close_event_service_pool():
     """Ensure Redis pool from event service is closed between tests."""
     yield
     from app.services.event_service import event_service
+
     await event_service.close()
 
 
@@ -79,6 +86,7 @@ async def close_cache_service():
     """Ensure Redis pool from cache service is closed between tests."""
     yield
     from app.core.cache import cache_service
+
     await cache_service.close()
     # Reset the Redis client to None so next test gets a fresh connection
     cache_service._redis = None
@@ -102,7 +110,7 @@ async def test_user(setup_test_database):
             full_name="Test User",
             is_active=True,
             is_superuser=False,
-            role="user"
+            role="user",
         )
         session.add(user)
         await session.commit()
@@ -113,15 +121,14 @@ async def test_user(setup_test_database):
 @pytest_asyncio.fixture(scope="session")
 async def auth_headers(test_user, setup_test_database):
     """Get authentication headers with JWT token - shared across all tests"""
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         # Login to get token
         response = await client.post(
             "/api/auth/login",
-            data={
-                "username": "testuser",
-                "password": "testpass123"
-            },
-            headers={"Content-Type": "application/x-www-form-urlencoded"}
+            data={"username": "testuser", "password": "testpass123"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
 
         if response.status_code != 200:
@@ -134,7 +141,9 @@ async def auth_headers(test_user, setup_test_database):
 @pytest_asyncio.fixture(scope="function")
 async def authenticated_client(auth_headers):
     """Provide an authenticated AsyncClient for tests"""
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         # Add auth headers to all requests
         client.headers.update(auth_headers)
         yield client

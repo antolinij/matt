@@ -3,24 +3,32 @@ Unit tests for SchoolRepository
 
 Tests CRUD operations and account status methods for schools.
 """
+
+from datetime import date
+from decimal import Decimal
+
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from decimal import Decimal
-from datetime import date
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 
 from app.core.database import Base
-from app.db.models import School, Student, Invoice, Payment, StudentStatus, InvoiceStatus, PaymentMethod
-from app.repositories.school_repository import SchoolRepository
-from app.repositories.student_repository import StudentRepository
+from app.core.exceptions import DuplicateRecordException
+from app.db.models import (Invoice, InvoiceStatus, Payment, PaymentMethod,
+                           School, Student, StudentStatus)
 from app.repositories.invoice_repository import InvoiceRepository
 from app.repositories.payment_repository import PaymentRepository
-from app.core.exceptions import DuplicateRecordException
+from app.repositories.school_repository import SchoolRepository
+from app.repositories.student_repository import StudentRepository
 
 # Test database
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test_school_repository.db"
-engine = create_async_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+engine = create_async_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
+TestingSessionLocal = async_sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
@@ -51,7 +59,7 @@ class TestSchoolRepositoryCRUD:
             name="Complete School",
             address="123 Main St",
             phone="+1234567890",
-            email="complete@school.com"
+            email="complete@school.com",
         )
 
         assert school.id is not None
@@ -156,7 +164,7 @@ class TestSchoolRepositoryCRUD:
             name="Updated Name",
             address="New Address",
             phone="+9876543210",
-            email="updated@school.com"
+            email="updated@school.com",
         )
 
         assert updated_school is not None
@@ -171,9 +179,7 @@ class TestSchoolRepositoryCRUD:
         """Test updating only some fields of a school"""
         repo = SchoolRepository(db_session)
         school = await repo.create(
-            name="Original",
-            address="Original Address",
-            email="original@school.com"
+            name="Original", address="Original Address", email="original@school.com"
         )
 
         updated_school = await repo.update(school.id, name="Updated")
@@ -243,14 +249,14 @@ class TestSchoolAccountStatus:
         status = await school_repo.get_account_status(school.id)
 
         assert status is not None
-        assert status['school_id'] == school.id
-        assert status['school_name'] == "Empty School"
-        assert status['total_students'] == 0
-        assert status['active_students'] == 0
-        assert status['total_invoiced'] == Decimal('0')
-        assert status['total_paid'] == Decimal('0')
-        assert status['total_pending'] == Decimal('0')
-        assert len(status['invoices']) == 0
+        assert status["school_id"] == school.id
+        assert status["school_name"] == "Empty School"
+        assert status["total_students"] == 0
+        assert status["active_students"] == 0
+        assert status["total_invoiced"] == Decimal("0")
+        assert status["total_paid"] == Decimal("0")
+        assert status["total_pending"] == Decimal("0")
+        assert len(status["invoices"]) == 0
 
     @pytest.mark.asyncio
     async def test_get_account_status_with_students_no_invoices(self, db_session):
@@ -263,23 +269,23 @@ class TestSchoolAccountStatus:
             school_id=school.id,
             first_name="John",
             last_name="Doe",
-            status=StudentStatus.ACTIVE
+            status=StudentStatus.ACTIVE,
         )
         await student_repo.create(
             school_id=school.id,
             first_name="Jane",
             last_name="Smith",
-            status=StudentStatus.INACTIVE
+            status=StudentStatus.INACTIVE,
         )
 
         status = await school_repo.get_account_status(school.id)
 
-        assert status['total_students'] == 2
-        assert status['active_students'] == 1
-        assert status['total_invoiced'] == Decimal('0')
-        assert status['total_paid'] == Decimal('0')
-        assert status['total_pending'] == Decimal('0')
-        assert len(status['invoices']) == 0
+        assert status["total_students"] == 2
+        assert status["active_students"] == 1
+        assert status["total_invoiced"] == Decimal("0")
+        assert status["total_paid"] == Decimal("0")
+        assert status["total_pending"] == Decimal("0")
+        assert len(status["invoices"]) == 0
 
     @pytest.mark.asyncio
     async def test_get_account_status_with_unpaid_invoices(self, db_session):
@@ -291,9 +297,7 @@ class TestSchoolAccountStatus:
         # Create school and student
         school = await school_repo.create(name="Test School")
         student = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
 
         # Create invoices
@@ -301,24 +305,24 @@ class TestSchoolAccountStatus:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         invoice2 = await invoice_repo.create(
             student_id=student.id,
             amount=Decimal("200.00"),
             due_date=date(2024, 11, 30),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         status = await school_repo.get_account_status(school.id)
 
-        assert status['total_invoiced'] == Decimal('300.00')
-        assert status['total_paid'] == Decimal('0')
-        assert status['total_pending'] == Decimal('300.00')
-        assert len(status['invoices']) == 2
+        assert status["total_invoiced"] == Decimal("300.00")
+        assert status["total_paid"] == Decimal("0")
+        assert status["total_pending"] == Decimal("300.00")
+        assert len(status["invoices"]) == 2
 
         # Check invoice details
-        invoice_ids = [inv['id'] for inv in status['invoices']]
+        invoice_ids = [inv["id"] for inv in status["invoices"]]
         assert invoice1.id in invoice_ids
         assert invoice2.id in invoice_ids
 
@@ -333,32 +337,30 @@ class TestSchoolAccountStatus:
         # Create school, student, and invoice
         school = await school_repo.create(name="Test School")
         student = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
         invoice = await invoice_repo.create(
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # Create partial payment
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         status = await school_repo.get_account_status(school.id)
 
-        assert status['total_invoiced'] == Decimal('100.00')
-        assert status['total_paid'] == Decimal('30.00')
-        assert status['total_pending'] == Decimal('70.00')
-        assert len(status['invoices']) == 1
-        assert status['invoices'][0]['paid_amount'] == Decimal('30.00')
-        assert status['invoices'][0]['balance'] == Decimal('70.00')
+        assert status["total_invoiced"] == Decimal("100.00")
+        assert status["total_paid"] == Decimal("30.00")
+        assert status["total_pending"] == Decimal("70.00")
+        assert len(status["invoices"]) == 1
+        assert status["invoices"][0]["paid_amount"] == Decimal("30.00")
+        assert status["invoices"][0]["balance"] == Decimal("70.00")
 
     @pytest.mark.asyncio
     async def test_get_account_status_with_fully_paid_invoices(self, db_session):
@@ -371,31 +373,29 @@ class TestSchoolAccountStatus:
         # Create school, student, and invoice
         school = await school_repo.create(name="Test School")
         student = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
         invoice = await invoice_repo.create(
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # Create full payment
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("100.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         status = await school_repo.get_account_status(school.id)
 
-        assert status['total_invoiced'] == Decimal('100.00')
-        assert status['total_paid'] == Decimal('100.00')
-        assert status['total_pending'] == Decimal('0')
-        assert status['invoices'][0]['paid_amount'] == Decimal('100.00')
-        assert status['invoices'][0]['balance'] == Decimal('0')
+        assert status["total_invoiced"] == Decimal("100.00")
+        assert status["total_paid"] == Decimal("100.00")
+        assert status["total_pending"] == Decimal("0")
+        assert status["invoices"][0]["paid_amount"] == Decimal("100.00")
+        assert status["invoices"][0]["balance"] == Decimal("0")
 
     @pytest.mark.asyncio
     async def test_get_account_status_with_multiple_students(self, db_session):
@@ -408,14 +408,10 @@ class TestSchoolAccountStatus:
         # Create school and students
         school = await school_repo.create(name="Test School")
         student1 = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
         student2 = await student_repo.create(
-            school_id=school.id,
-            first_name="Jane",
-            last_name="Smith"
+            school_id=school.id, first_name="Jane", last_name="Smith"
         )
 
         # Create invoices for both students
@@ -423,29 +419,29 @@ class TestSchoolAccountStatus:
             student_id=student1.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         invoice2 = await invoice_repo.create(
             student_id=student2.id,
             amount=Decimal("200.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # Create payment for student1
         await payment_repo.create(
             invoice_id=invoice1.id,
             amount=Decimal("50.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         status = await school_repo.get_account_status(school.id)
 
-        assert status['total_students'] == 2
-        assert status['total_invoiced'] == Decimal('300.00')
-        assert status['total_paid'] == Decimal('50.00')
-        assert status['total_pending'] == Decimal('250.00')
-        assert len(status['invoices']) == 2
+        assert status["total_students"] == 2
+        assert status["total_invoiced"] == Decimal("300.00")
+        assert status["total_paid"] == Decimal("50.00")
+        assert status["total_pending"] == Decimal("250.00")
+        assert len(status["invoices"]) == 2
 
 
 class TestSchoolStudentAccountStatus:
@@ -479,9 +475,7 @@ class TestSchoolStudentAccountStatus:
 
         # Create student in school1
         student = await student_repo.create(
-            school_id=school1.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school1.id, first_name="John", last_name="Doe"
         )
 
         # Try to get student from school2
@@ -496,20 +490,18 @@ class TestSchoolStudentAccountStatus:
 
         school = await school_repo.create(name="Test School")
         student = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
 
         status = await school_repo.get_student_account_status(school.id, student.id)
 
         assert status is not None
-        assert status['student_id'] == student.id
-        assert status['student_name'] == "John Doe"
-        assert status['total_invoiced'] == Decimal('0')
-        assert status['total_paid'] == Decimal('0')
-        assert status['total_pending'] == Decimal('0')
-        assert len(status['invoices']) == 0
+        assert status["student_id"] == student.id
+        assert status["student_name"] == "John Doe"
+        assert status["total_invoiced"] == Decimal("0")
+        assert status["total_paid"] == Decimal("0")
+        assert status["total_pending"] == Decimal("0")
+        assert len(status["invoices"]) == 0
 
     @pytest.mark.asyncio
     async def test_get_student_account_status_with_invoices(self, db_session):
@@ -522,9 +514,7 @@ class TestSchoolStudentAccountStatus:
         # Create school and student
         school = await school_repo.create(name="Test School")
         student = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
 
         # Create invoices
@@ -532,45 +522,51 @@ class TestSchoolStudentAccountStatus:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         invoice2 = await invoice_repo.create(
             student_id=student.id,
             amount=Decimal("200.00"),
             due_date=date(2024, 11, 30),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # Create partial payment on invoice1
         await payment_repo.create(
             invoice_id=invoice1.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         status = await school_repo.get_student_account_status(school.id, student.id)
 
-        assert status['student_id'] == student.id
-        assert status['student_name'] == "John Doe"
-        assert status['total_invoiced'] == Decimal('300.00')
-        assert status['total_paid'] == Decimal('30.00')
-        assert status['total_pending'] == Decimal('270.00')
-        assert len(status['invoices']) == 2
+        assert status["student_id"] == student.id
+        assert status["student_name"] == "John Doe"
+        assert status["total_invoiced"] == Decimal("300.00")
+        assert status["total_paid"] == Decimal("30.00")
+        assert status["total_pending"] == Decimal("270.00")
+        assert len(status["invoices"]) == 2
 
         # Find invoice1 in results
-        inv1_data = next((inv for inv in status['invoices'] if inv['id'] == invoice1.id), None)
+        inv1_data = next(
+            (inv for inv in status["invoices"] if inv["id"] == invoice1.id), None
+        )
         assert inv1_data is not None
-        assert inv1_data['paid_amount'] == Decimal('30.00')
-        assert inv1_data['balance'] == Decimal('70.00')
+        assert inv1_data["paid_amount"] == Decimal("30.00")
+        assert inv1_data["balance"] == Decimal("70.00")
 
         # Find invoice2 in results
-        inv2_data = next((inv for inv in status['invoices'] if inv['id'] == invoice2.id), None)
+        inv2_data = next(
+            (inv for inv in status["invoices"] if inv["id"] == invoice2.id), None
+        )
         assert inv2_data is not None
-        assert inv2_data['paid_amount'] == Decimal('0')
-        assert inv2_data['balance'] == Decimal('200.00')
+        assert inv2_data["paid_amount"] == Decimal("0")
+        assert inv2_data["balance"] == Decimal("200.00")
 
     @pytest.mark.asyncio
-    async def test_get_student_account_status_multiple_payments_on_invoice(self, db_session):
+    async def test_get_student_account_status_multiple_payments_on_invoice(
+        self, db_session
+    ):
         """Test student account status with multiple payments on one invoice"""
         school_repo = SchoolRepository(db_session)
         student_repo = StudentRepository(db_session)
@@ -580,33 +576,31 @@ class TestSchoolStudentAccountStatus:
         # Create school, student, and invoice
         school = await school_repo.create(name="Test School")
         student = await student_repo.create(
-            school_id=school.id,
-            first_name="John",
-            last_name="Doe"
+            school_id=school.id, first_name="John", last_name="Doe"
         )
         invoice = await invoice_repo.create(
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # Create multiple payments
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
         await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("40.00"),
-            payment_date=date(2024, 1, 20)
+            payment_date=date(2024, 1, 20),
         )
 
         status = await school_repo.get_student_account_status(school.id, student.id)
 
-        assert status['total_invoiced'] == Decimal('100.00')
-        assert status['total_paid'] == Decimal('70.00')
-        assert status['total_pending'] == Decimal('30.00')
-        assert status['invoices'][0]['paid_amount'] == Decimal('70.00')
-        assert status['invoices'][0]['balance'] == Decimal('30.00')
+        assert status["total_invoiced"] == Decimal("100.00")
+        assert status["total_paid"] == Decimal("70.00")
+        assert status["total_pending"] == Decimal("30.00")
+        assert status["invoices"][0]["paid_amount"] == Decimal("70.00")
+        assert status["invoices"][0]["balance"] == Decimal("30.00")
