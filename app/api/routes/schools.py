@@ -5,13 +5,16 @@ This module defines all HTTP endpoints for school management operations.
 All routes use dependency injection for services and follow RESTful conventions.
 All endpoints require JWT authentication.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+
 from typing import List
 
-from app.schemas import School, SchoolCreate, SchoolUpdate, SchoolAccountStatus, StudentAccountStatus, User
-from app.services.school_service import SchoolService
+from fastapi import APIRouter, Depends, HTTPException, status
+
 from app.api.dependencies import get_school_service
 from app.core.security import get_current_active_user
+from app.schemas import (School, SchoolAccountStatus, SchoolCreate,
+                         SchoolUpdate, StudentAccountStatus, User)
+from app.services.school_service import SchoolService
 
 router = APIRouter(prefix="/schools", tags=["schools"])
 
@@ -20,7 +23,7 @@ router = APIRouter(prefix="/schools", tags=["schools"])
 async def create_school(
     school: SchoolCreate,
     service: SchoolService = Depends(get_school_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Create a new school. 🔒 Requires authentication.
@@ -44,7 +47,7 @@ async def list_schools(
     skip: int = 0,
     limit: int = 100,
     service: SchoolService = Depends(get_school_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List all schools with pagination. 🔒 Requires authentication.
@@ -65,7 +68,7 @@ async def list_schools(
 async def get_school(
     school_id: int,
     service: SchoolService = Depends(get_school_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get a specific school by ID. 🔒 Requires authentication.
@@ -84,8 +87,7 @@ async def get_school(
     school = await service.get_school(school_id)
     if not school:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="School not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="School not found"
         )
     return school
 
@@ -95,7 +97,7 @@ async def update_school(
     school_id: int,
     school: SchoolUpdate,
     service: SchoolService = Depends(get_school_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Update a school's information. 🔒 Requires authentication.
@@ -115,8 +117,7 @@ async def update_school(
     updated_school = await service.update_school(school_id, school)
     if not updated_school:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="School not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="School not found"
         )
     return updated_school
 
@@ -125,7 +126,7 @@ async def update_school(
 async def delete_school(
     school_id: int,
     service: SchoolService = Depends(get_school_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Delete a school. 🔒 Requires authentication.
@@ -147,8 +148,7 @@ async def delete_school(
     success = await service.delete_school(school_id)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="School not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="School not found"
         )
     return None
 
@@ -157,7 +157,7 @@ async def delete_school(
 async def get_school_account_status(
     school_id: int,
     service: SchoolService = Depends(get_school_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get comprehensive account status for a school. 🔒 Requires authentication.
@@ -183,18 +183,20 @@ async def get_school_account_status(
     account_status = await service.get_account_status(school_id)
     if not account_status:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="School not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="School not found"
         )
     return account_status
 
 
-@router.get("/{school_id}/students/{student_id}/account-status", response_model=StudentAccountStatus)
+@router.get(
+    "/{school_id}/students/{student_id}/account-status",
+    response_model=StudentAccountStatus,
+)
 async def get_school_student_account_status(
     school_id: int,
     student_id: int,
     service: SchoolService = Depends(get_school_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get account status for a specific student within a specific school. 🔒 Requires authentication.
@@ -229,6 +231,6 @@ async def get_school_student_account_status(
     if not account_status:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="School not found, student not found, or student doesn't belong to this school"
+            detail="School not found, student not found, or student doesn't belong to this school",
         )
     return account_status

@@ -6,24 +6,20 @@ Handles movement creation and denormalized field updates.
 
 Run with: arq app.workers.account_worker.WorkerSettings
 """
+
 import logging
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, Any
+from typing import Any, Dict
+
 from arq.connections import RedisSettings
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 
 from app.core.config import settings
-from app.db.models import (
-    AccountMovement,
-    MovementType,
-    MovementEntityType,
-    School,
-    Student,
-    Invoice,
-    Payment,
-    StudentStatus,
-)
+from app.db.models import (AccountMovement, Invoice, MovementEntityType,
+                           MovementType, Payment, School, Student,
+                           StudentStatus)
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +33,11 @@ def get_async_engine():
     global _engine, _AsyncSessionLocal
     if _engine is None:
         # Use asyncpg driver for async operations
-        db_url = settings.DATABASE_URL.replace('postgresql://', 'postgresql+asyncpg://')
+        db_url = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
         _engine = create_async_engine(db_url, echo=False)
-        _AsyncSessionLocal = async_sessionmaker(_engine, class_=AsyncSession, expire_on_commit=False)
+        _AsyncSessionLocal = async_sessionmaker(
+            _engine, class_=AsyncSession, expire_on_commit=False
+        )
     return _engine, _AsyncSessionLocal
 
 
@@ -50,8 +48,15 @@ async def get_db():
         return session
 
 
-async def handle_payment_created(ctx, payment_id: int, invoice_id: int, student_id: int,
-                                 school_id: int, amount: float, user_id: int = None):
+async def handle_payment_created(
+    ctx,
+    payment_id: int,
+    invoice_id: int,
+    student_id: int,
+    school_id: int,
+    amount: float,
+    user_id: int = None,
+):
     """
     Handle payment created event.
 
@@ -126,7 +131,9 @@ async def handle_payment_created(ctx, payment_id: int, invoice_id: int, student_
         db.add(school_movement)
         await db.commit()
 
-        logger.info(f"Successfully processed payment_created event for payment {payment_id}")
+        logger.info(
+            f"Successfully processed payment_created event for payment {payment_id}"
+        )
 
     except Exception as e:
         await db.rollback()
@@ -136,8 +143,14 @@ async def handle_payment_created(ctx, payment_id: int, invoice_id: int, student_
         await db.close()
 
 
-async def handle_invoice_created(ctx, invoice_id: int, student_id: int,
-                                 school_id: int, amount: float, user_id: int = None):
+async def handle_invoice_created(
+    ctx,
+    invoice_id: int,
+    student_id: int,
+    school_id: int,
+    amount: float,
+    user_id: int = None,
+):
     """
     Handle invoice created event.
 
@@ -212,7 +225,9 @@ async def handle_invoice_created(ctx, invoice_id: int, student_id: int,
         db.add(school_movement)
         await db.commit()
 
-        logger.info(f"Successfully processed invoice_created event for invoice {invoice_id}")
+        logger.info(
+            f"Successfully processed invoice_created event for invoice {invoice_id}"
+        )
 
     except Exception as e:
         await db.rollback()
@@ -222,8 +237,15 @@ async def handle_invoice_created(ctx, invoice_id: int, student_id: int,
         await db.close()
 
 
-async def handle_invoice_updated(ctx, invoice_id: int, student_id: int, school_id: int,
-                                 old_amount: float, new_amount: float, user_id: int = None):
+async def handle_invoice_updated(
+    ctx,
+    invoice_id: int,
+    student_id: int,
+    school_id: int,
+    old_amount: float,
+    new_amount: float,
+    user_id: int = None,
+):
     """
     Handle invoice updated event.
 
@@ -300,7 +322,9 @@ async def handle_invoice_updated(ctx, invoice_id: int, student_id: int, school_i
         db.add(school_movement)
         await db.commit()
 
-        logger.info(f"Successfully processed invoice_updated event for invoice {invoice_id}")
+        logger.info(
+            f"Successfully processed invoice_updated event for invoice {invoice_id}"
+        )
 
     except Exception as e:
         await db.rollback()
@@ -310,7 +334,9 @@ async def handle_invoice_updated(ctx, invoice_id: int, student_id: int, school_i
         await db.close()
 
 
-async def handle_student_enrolled(ctx, student_id: int, school_id: int, user_id: int = None):
+async def handle_student_enrolled(
+    ctx, student_id: int, school_id: int, user_id: int = None
+):
     """
     Handle student enrolled event.
 
@@ -328,7 +354,7 @@ async def handle_student_enrolled(ctx, student_id: int, school_id: int, user_id:
             field_name="total_students",
             old_value=None,
             new_value=None,
-            delta=Decimal('1'),
+            delta=Decimal("1"),
             related_entity_type="Student",
             related_entity_id=student_id,
             description=f"Student #{student_id} enrolled",
@@ -348,7 +374,9 @@ async def handle_student_enrolled(ctx, student_id: int, school_id: int, user_id:
         db.add(school_movement)
         await db.commit()
 
-        logger.info(f"Successfully processed student_enrolled event for student {student_id}")
+        logger.info(
+            f"Successfully processed student_enrolled event for student {student_id}"
+        )
 
     except Exception as e:
         await db.rollback()
@@ -358,8 +386,14 @@ async def handle_student_enrolled(ctx, student_id: int, school_id: int, user_id:
         await db.close()
 
 
-async def handle_student_status_changed(ctx, student_id: int, school_id: int,
-                                        old_status: str, new_status: str, user_id: int = None):
+async def handle_student_status_changed(
+    ctx,
+    student_id: int,
+    school_id: int,
+    old_status: str,
+    new_status: str,
+    user_id: int = None,
+):
     """
     Handle student status changed event.
 
@@ -408,7 +442,9 @@ async def handle_student_status_changed(ctx, student_id: int, school_id: int,
             db.add(school_movement)
             await db.commit()
 
-        logger.info(f"Successfully processed student_status_changed event for student {student_id}")
+        logger.info(
+            f"Successfully processed student_status_changed event for student {student_id}"
+        )
 
     except Exception as e:
         await db.rollback()
@@ -421,6 +457,7 @@ async def handle_student_status_changed(ctx, student_id: int, school_id: int,
 # Worker configuration
 class WorkerSettings:
     """arq worker configuration"""
+
     functions = [
         handle_payment_created,
         handle_invoice_created,
@@ -430,9 +467,9 @@ class WorkerSettings:
     ]
 
     redis_settings = RedisSettings(
-        host=getattr(settings, 'REDIS_HOST', 'localhost'),
-        port=getattr(settings, 'REDIS_PORT', 6379),
-        database=getattr(settings, 'REDIS_DB', 0),
+        host=getattr(settings, "REDIS_HOST", "localhost"),
+        port=getattr(settings, "REDIS_PORT", 6379),
+        database=getattr(settings, "REDIS_DB", 0),
     )
 
     job_timeout = 300  # 5 minutes

@@ -1,6 +1,7 @@
 """
 Integration tests for Prometheus metrics exposure and counter behavior.
 """
+
 import re
 
 import pytest
@@ -9,7 +10,9 @@ from httpx import ASGITransport, AsyncClient
 from app.main import app
 
 
-def _parse_metric_samples(metrics_text: str, metric_name: str) -> list[tuple[dict[str, str], float]]:
+def _parse_metric_samples(
+    metrics_text: str, metric_name: str
+) -> list[tuple[dict[str, str], float]]:
     """Parse Prometheus exposition lines for one metric."""
     samples: list[tuple[dict[str, str], float]] = []
     prefix = f"{metric_name}{{"
@@ -19,16 +22,21 @@ def _parse_metric_samples(metrics_text: str, metric_name: str) -> list[tuple[dic
             continue
 
         end = line.rfind("}")
-        labels_raw = line[len(prefix):end]
+        labels_raw = line[len(prefix) : end]
         value_raw = line[end + 1 :].strip().split(" ", 1)[0]
 
-        labels = {k: v for k, v in re.findall(r'([a-zA-Z_][a-zA-Z0-9_]*)="([^"]*)"', labels_raw)}
+        labels = {
+            k: v
+            for k, v in re.findall(r'([a-zA-Z_][a-zA-Z0-9_]*)="([^"]*)"', labels_raw)
+        }
         samples.append((labels, float(value_raw)))
 
     return samples
 
 
-def _metric_value(metrics_text: str, metric_name: str, expected_labels: dict[str, str]) -> float:
+def _metric_value(
+    metrics_text: str, metric_name: str, expected_labels: dict[str, str]
+) -> float:
     """Get exact-label metric value; return 0 when missing."""
     for labels, value in _parse_metric_samples(metrics_text, metric_name):
         if labels == expected_labels:
@@ -39,7 +47,9 @@ def _metric_value(metrics_text: str, metric_name: str, expected_labels: dict[str
 @pytest.mark.asyncio
 async def test_success_request_increments_attempt_and_success_metrics():
     """A successful request should increment attempt and success counters."""
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         before = (await client.get("/metrics")).text
 
         response = await client.get("/health")
@@ -73,9 +83,13 @@ async def test_success_request_increments_attempt_and_success_metrics():
 
 
 @pytest.mark.asyncio
-async def test_failed_request_increments_attempt_and_error_metrics(authenticated_client):
+async def test_failed_request_increments_attempt_and_error_metrics(
+    authenticated_client,
+):
     """A controlled 4xx request should increment attempt and error counters."""
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         before = (await client.get("/metrics")).text
 
         # Try to create a student with invalid FK - should return 400

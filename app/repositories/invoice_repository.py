@@ -1,18 +1,18 @@
 """Invoice repository for database operations"""
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError, OperationalError, DataError
-from typing import List, Optional
-from decimal import Decimal
-from datetime import date
 
-from app.db.models import Student, Invoice, Payment, InvoiceStatus
-from app.core.exceptions import (
-    ForeignKeyViolationException,
-    DatabaseConnectionException,
-    DatabaseOperationException,
-    InvalidDataException
-)
+from datetime import date
+from decimal import Decimal
+from typing import List, Optional
+
+from sqlalchemy import func, select
+from sqlalchemy.exc import DataError, IntegrityError, OperationalError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import (DatabaseConnectionException,
+                                 DatabaseOperationException,
+                                 ForeignKeyViolationException,
+                                 InvalidDataException)
+from app.db.models import Invoice, InvoiceStatus, Payment, Student
 
 
 class InvoiceRepository:
@@ -42,11 +42,19 @@ class InvoiceRepository:
         except OperationalError as e:
             raise DatabaseConnectionException(str(e.orig))
         except Exception as e:
-            raise DatabaseOperationException("generate_invoice_number", "Invoice", str(e))
+            raise DatabaseOperationException(
+                "generate_invoice_number", "Invoice", str(e)
+            )
 
-    async def create(self, student_id: int, amount: Decimal, due_date: date,
-                    issue_date: date, description: Optional[str] = None,
-                    status: InvoiceStatus = InvoiceStatus.PENDING) -> Invoice:
+    async def create(
+        self,
+        student_id: int,
+        amount: Decimal,
+        due_date: date,
+        issue_date: date,
+        description: Optional[str] = None,
+        status: InvoiceStatus = InvoiceStatus.PENDING,
+    ) -> Invoice:
         """
         Create a new invoice.
 
@@ -82,7 +90,7 @@ class InvoiceRepository:
                 due_date=due_date,
                 issue_date=issue_date,
                 description=description,
-                status=status
+                status=status,
             )
             self.db.add(invoice)
             await self.db.commit()
@@ -93,7 +101,7 @@ class InvoiceRepository:
             error_msg = str(e.orig).lower()
 
             # Check which constraint was violated
-            if 'foreign key' in error_msg and 'student' in error_msg:
+            if "foreign key" in error_msg and "student" in error_msg:
                 raise ForeignKeyViolationException("Invoice", "student_id", student_id)
             else:
                 raise DatabaseOperationException("create", "Invoice", str(e.orig))
@@ -134,8 +142,9 @@ class InvoiceRepository:
         except Exception as e:
             raise DatabaseOperationException("get", "Invoice", str(e))
 
-    async def get_all(self, skip: int = 0, limit: int = 100,
-                     student_id: Optional[int] = None) -> List[Invoice]:
+    async def get_all(
+        self, skip: int = 0, limit: int = 100, student_id: Optional[int] = None
+    ) -> List[Invoice]:
         """
         Get all invoices with pagination and optional student filter.
 
@@ -191,7 +200,9 @@ class InvoiceRepository:
                     select(Student.id).filter(Student.id == kwargs["student_id"])
                 )
                 if student_exists is None:
-                    raise ForeignKeyViolationException("Invoice", "student_id", kwargs["student_id"])
+                    raise ForeignKeyViolationException(
+                        "Invoice", "student_id", kwargs["student_id"]
+                    )
 
             for field, value in kwargs.items():
                 if value is not None and hasattr(invoice, field):
@@ -205,8 +216,10 @@ class InvoiceRepository:
             error_msg = str(e.orig).lower()
 
             # Check which constraint was violated
-            if 'foreign key' in error_msg and 'student' in error_msg:
-                raise ForeignKeyViolationException("Invoice", "student_id", kwargs.get('student_id', 'unknown'))
+            if "foreign key" in error_msg and "student" in error_msg:
+                raise ForeignKeyViolationException(
+                    "Invoice", "student_id", kwargs.get("student_id", "unknown")
+                )
             else:
                 raise DatabaseOperationException("update", "Invoice", str(e.orig))
         except DataError as e:
@@ -278,7 +291,9 @@ class InvoiceRepository:
         except Exception as e:
             raise DatabaseOperationException("get_paid_amount", "Invoice", str(e))
 
-    async def update_status_based_on_payments(self, invoice_id: int) -> Optional[Invoice]:
+    async def update_status_based_on_payments(
+        self, invoice_id: int
+    ) -> Optional[Invoice]:
         """
         Update invoice status based on payment amount.
 
@@ -311,4 +326,6 @@ class InvoiceRepository:
             raise DatabaseConnectionException(str(e.orig))
         except Exception as e:
             await self.db.rollback()
-            raise DatabaseOperationException("update_status_based_on_payments", "Invoice", str(e))
+            raise DatabaseOperationException(
+                "update_status_based_on_payments", "Invoice", str(e)
+            )

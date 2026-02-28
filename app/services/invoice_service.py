@@ -1,17 +1,21 @@
 """Invoice service for business logic"""
-from typing import List, Optional
+
 from decimal import Decimal
+from typing import List, Optional
+
+from app.core.exceptions import ForeignKeyViolationException
 from app.repositories.invoice_repository import InvoiceRepository
 from app.repositories.student_repository import StudentRepository
 from app.schemas import Invoice, InvoiceCreate, InvoiceUpdate
-from app.core.exceptions import ForeignKeyViolationException
 from app.services.event_service import event_service
 
 
 class InvoiceService:
     """Service for Invoice business logic"""
 
-    def __init__(self, repository: InvoiceRepository, student_repository: StudentRepository):
+    def __init__(
+        self, repository: InvoiceRepository, student_repository: StudentRepository
+    ):
         self.repository = repository
         self.student_repository = student_repository
 
@@ -33,7 +37,9 @@ class InvoiceService:
         # Verify student exists
         student = await self.student_repository.get(schema.student_id)
         if not student:
-            raise ForeignKeyViolationException("Invoice", "student_id", schema.student_id)
+            raise ForeignKeyViolationException(
+                "Invoice", "student_id", schema.student_id
+            )
 
         db_invoice = await self.repository.create(
             student_id=schema.student_id,
@@ -41,7 +47,7 @@ class InvoiceService:
             due_date=schema.due_date,
             issue_date=schema.issue_date,
             description=schema.description,
-            status=schema.status
+            status=schema.status,
         )
 
         # Publish invoice_created event for async processing
@@ -50,7 +56,7 @@ class InvoiceService:
             student_id=student.id,
             school_id=student.school_id,
             amount=float(schema.amount),
-            user_id=None  # TODO: Add when auth is integrated
+            user_id=None,  # TODO: Add when auth is integrated
         )
 
         return Invoice.model_validate(db_invoice)
@@ -71,10 +77,7 @@ class InvoiceService:
         return Invoice.model_validate(db_invoice)
 
     async def get_all_invoices(
-        self,
-        skip: int = 0,
-        limit: int = 100,
-        student_id: Optional[int] = None
+        self, skip: int = 0, limit: int = 100, student_id: Optional[int] = None
     ) -> List[Invoice]:
         """
         Get all invoices with pagination and optional student filter
@@ -88,13 +91,13 @@ class InvoiceService:
             List of Invoice schemas
         """
         db_invoices = await self.repository.get_all(
-            skip=skip,
-            limit=limit,
-            student_id=student_id
+            skip=skip, limit=limit, student_id=student_id
         )
         return [Invoice.model_validate(invoice) for invoice in db_invoices]
 
-    async def update_invoice(self, invoice_id: int, schema: InvoiceUpdate) -> Optional[Invoice]:
+    async def update_invoice(
+        self, invoice_id: int, schema: InvoiceUpdate
+    ) -> Optional[Invoice]:
         """
         Update an invoice
 
@@ -116,14 +119,16 @@ class InvoiceService:
 
         # If updating student_id, verify new student exists
         update_data = schema.model_dump(exclude_unset=True)
-        if 'student_id' in update_data:
-            new_student = await self.student_repository.get(update_data['student_id'])
+        if "student_id" in update_data:
+            new_student = await self.student_repository.get(update_data["student_id"])
             if not new_student:
-                raise ForeignKeyViolationException("Invoice", "student_id", update_data["student_id"])
+                raise ForeignKeyViolationException(
+                    "Invoice", "student_id", update_data["student_id"]
+                )
 
         # Track old amount for event publishing
         old_amount = float(existing_invoice.amount)
-        amount_changed = 'amount' in update_data
+        amount_changed = "amount" in update_data
 
         db_invoice = await self.repository.update(invoice_id, **update_data)
         if not db_invoice:
@@ -140,7 +145,7 @@ class InvoiceService:
                     school_id=student.school_id,
                     old_amount=old_amount,
                     new_amount=float(db_invoice.amount),
-                    user_id=None  # TODO: Add when auth is integrated
+                    user_id=None,  # TODO: Add when auth is integrated
                 )
 
         return Invoice.model_validate(db_invoice)
@@ -182,7 +187,9 @@ class InvoiceService:
 
         return await self.repository.get_paid_amount(invoice_id)
 
-    async def update_status_based_on_payments(self, invoice_id: int) -> Optional[Invoice]:
+    async def update_status_based_on_payments(
+        self, invoice_id: int
+    ) -> Optional[Invoice]:
         """
         Update invoice status based on payment amount
 

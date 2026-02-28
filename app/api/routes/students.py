@@ -4,13 +4,16 @@ Student API Routes
 This module defines all HTTP endpoints for student management operations.
 All routes use dependency injection for services and follow RESTful conventions.
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+
 from typing import List, Optional
 
-from app.schemas import Student, StudentCreate, StudentUpdate, StudentAccountStatus, User
-from app.services.student_service import StudentService
-from app.core.security import get_current_active_user
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
 from app.api.dependencies import get_student_service
+from app.core.security import get_current_active_user
+from app.schemas import (Student, StudentAccountStatus, StudentCreate,
+                         StudentUpdate, User)
+from app.services.student_service import StudentService
 
 router = APIRouter(prefix="/students", tags=["students"])
 
@@ -19,7 +22,7 @@ router = APIRouter(prefix="/students", tags=["students"])
 async def create_student(
     student: StudentCreate,
     service: StudentService = Depends(get_student_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Create a new student. 🔒 Requires authentication.
@@ -37,8 +40,7 @@ async def create_student(
     created_student = await service.create_student(student)
     if not created_student:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="School not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="School not found"
         )
     return created_student
 
@@ -49,7 +51,7 @@ async def list_students(
     limit: int = 100,
     school_id: Optional[int] = Query(None, description="Filter by school ID"),
     service: StudentService = Depends(get_student_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List all students with pagination and optional filtering. 🔒 Requires authentication.
@@ -70,7 +72,7 @@ async def list_students(
 async def get_student(
     student_id: int,
     service: StudentService = Depends(get_student_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get a specific student by ID. 🔒 Requires authentication.
@@ -88,8 +90,7 @@ async def get_student(
     student = await service.get_student(student_id)
     if not student:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Student not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Student not found"
         )
     return student
 
@@ -99,7 +100,7 @@ async def update_student(
     student_id: int,
     student: StudentUpdate,
     service: StudentService = Depends(get_student_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Update a student's information. 🔒 Requires authentication.
@@ -119,7 +120,7 @@ async def update_student(
     if not updated_student:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Student not found or invalid school_id"
+            detail="Student not found or invalid school_id",
         )
     return updated_student
 
@@ -128,7 +129,7 @@ async def update_student(
 async def delete_student(
     student_id: int,
     service: StudentService = Depends(get_student_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Delete a student. 🔒 Requires authentication.
@@ -149,8 +150,7 @@ async def delete_student(
     success = await service.delete_student(student_id)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Student not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Student not found"
         )
     return None
 
@@ -158,9 +158,11 @@ async def delete_student(
 @router.get("/{student_id}/account-status", response_model=StudentAccountStatus)
 async def get_student_account_status(
     student_id: int,
-    school_id: Optional[int] = Query(None, description="Validate that student belongs to this school"),
+    school_id: Optional[int] = Query(
+        None, description="Validate that student belongs to this school"
+    ),
     service: StudentService = Depends(get_student_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get comprehensive account status for a student. 🔒 Requires authentication.
@@ -196,11 +198,10 @@ async def get_student_account_status(
         if school_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Student not found or doesn't belong to school {school_id}"
+                detail=f"Student not found or doesn't belong to school {school_id}",
             )
         else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Student not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Student not found"
             )
     return account_status

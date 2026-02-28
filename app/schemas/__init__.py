@@ -1,11 +1,13 @@
 """Pydantic schemas (DTOs)"""
-from .school import School, SchoolCreate, SchoolUpdate
-from .student import Student, StudentCreate, StudentUpdate
+
+from .account_status import (InvoiceDetail, SchoolAccountStatus,
+                             SchoolStudentAccountStatus, StudentAccountStatus)
 from .invoice import Invoice, InvoiceCreate, InvoiceUpdate
 from .payment import Payment, PaymentCreate, PaymentUpdate
-from .account_status import InvoiceDetail, StudentAccountStatus, SchoolAccountStatus, SchoolStudentAccountStatus
-from .user import User, UserCreate, UserLogin, UserUpdate, UserInDB
-from .token import Token, TokenData, RefreshTokenRequest
+from .school import School, SchoolCreate, SchoolUpdate
+from .student import Student, StudentCreate, StudentUpdate
+from .token import RefreshTokenRequest, Token, TokenData
+from .user import User, UserCreate, UserInDB, UserLogin, UserUpdate
 
 __all__ = [
     # School

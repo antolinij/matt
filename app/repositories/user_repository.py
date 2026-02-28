@@ -4,19 +4,19 @@ User Repository
 Data access layer for User model operations.
 Handles all database interactions for user management.
 """
-from typing import Optional, List
-from sqlalchemy import select, or_
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError, OperationalError, DataError
-from datetime import datetime
 
+from datetime import datetime
+from typing import List, Optional
+
+from sqlalchemy import or_, select
+from sqlalchemy.exc import DataError, IntegrityError, OperationalError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import (DatabaseConnectionException,
+                                 DatabaseOperationException,
+                                 DuplicateRecordException,
+                                 InvalidDataException)
 from app.db.models.user import User
-from app.core.exceptions import (
-    DuplicateRecordException,
-    DatabaseConnectionException,
-    DatabaseOperationException,
-    InvalidDataException
-)
 
 
 class UserRepository:
@@ -57,9 +57,9 @@ class UserRepository:
             error_msg = str(e.orig).lower()
 
             # Check which constraint was violated
-            if 'username' in error_msg or 'ix_users_username' in error_msg:
+            if "username" in error_msg or "ix_users_username" in error_msg:
                 raise DuplicateRecordException("User", "username", user.username)
-            elif 'email' in error_msg or 'ix_users_email' in error_msg:
+            elif "email" in error_msg or "ix_users_email" in error_msg:
                 raise DuplicateRecordException("User", "email", user.email)
             else:
                 raise DatabaseOperationException("create", "User", str(e.orig))
@@ -88,9 +88,7 @@ class UserRepository:
             DatabaseOperationException: If operation fails
         """
         try:
-            result = await self.db.execute(
-                select(User).filter(User.id == user_id)
-            )
+            result = await self.db.execute(select(User).filter(User.id == user_id))
             return result.scalar_one_or_none()
         except OperationalError as e:
             raise DatabaseConnectionException(str(e.orig))
@@ -136,9 +134,7 @@ class UserRepository:
             DatabaseOperationException: If operation fails
         """
         try:
-            result = await self.db.execute(
-                select(User).filter(User.email == email)
-            )
+            result = await self.db.execute(select(User).filter(User.email == email))
             return result.scalar_one_or_none()
         except OperationalError as e:
             raise DatabaseConnectionException(str(e.orig))
@@ -187,9 +183,7 @@ class UserRepository:
             DatabaseOperationException: If operation fails
         """
         try:
-            result = await self.db.execute(
-                select(User).offset(skip).limit(limit)
-            )
+            result = await self.db.execute(select(User).offset(skip).limit(limit))
             return list(result.scalars().all())
         except OperationalError as e:
             raise DatabaseConnectionException(str(e.orig))
@@ -224,9 +218,9 @@ class UserRepository:
             error_msg = str(e.orig).lower()
 
             # Check which constraint was violated
-            if 'username' in error_msg or 'ix_users_username' in error_msg:
+            if "username" in error_msg or "ix_users_username" in error_msg:
                 raise DuplicateRecordException("User", "username", username)
-            elif 'email' in error_msg or 'ix_users_email' in error_msg:
+            elif "email" in error_msg or "ix_users_email" in error_msg:
                 raise DuplicateRecordException("User", "email", email)
             else:
                 raise DatabaseOperationException("update", "User", str(e.orig))

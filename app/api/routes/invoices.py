@@ -4,14 +4,16 @@ Invoice API Routes
 This module defines all HTTP endpoints for invoice management operations.
 All routes use dependency injection for services and follow RESTful conventions.
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from typing import List, Optional
-from decimal import Decimal
 
+from decimal import Decimal
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
+from app.api.dependencies import get_invoice_service
+from app.core.security import get_current_active_user
 from app.schemas import Invoice, InvoiceCreate, InvoiceUpdate, User
 from app.services.invoice_service import InvoiceService
-from app.core.security import get_current_active_user
-from app.api.dependencies import get_invoice_service
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -20,7 +22,7 @@ router = APIRouter(prefix="/invoices", tags=["invoices"])
 async def create_invoice(
     invoice: InvoiceCreate,
     service: InvoiceService = Depends(get_invoice_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Create a new invoice. 🔒 Requires authentication.
@@ -43,8 +45,7 @@ async def create_invoice(
     created_invoice = await service.create_invoice(invoice)
     if not created_invoice:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Student not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Student not found"
         )
     return created_invoice
 
@@ -55,7 +56,7 @@ async def list_invoices(
     limit: int = 100,
     student_id: Optional[int] = Query(None, description="Filter by student ID"),
     service: InvoiceService = Depends(get_invoice_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List all invoices with pagination and optional filtering. 🔒 Requires authentication.
@@ -76,7 +77,7 @@ async def list_invoices(
 async def get_invoice(
     invoice_id: int,
     service: InvoiceService = Depends(get_invoice_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get a specific invoice by ID. 🔒 Requires authentication.
@@ -94,8 +95,7 @@ async def get_invoice(
     invoice = await service.get_invoice(invoice_id)
     if not invoice:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invoice not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found"
         )
     return invoice
 
@@ -105,7 +105,7 @@ async def update_invoice(
     invoice_id: int,
     invoice: InvoiceUpdate,
     service: InvoiceService = Depends(get_invoice_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Update an invoice's information. 🔒 Requires authentication.
@@ -129,7 +129,7 @@ async def update_invoice(
     if not updated_invoice:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invoice not found or invalid student_id"
+            detail="Invoice not found or invalid student_id",
         )
     return updated_invoice
 
@@ -138,7 +138,7 @@ async def update_invoice(
 async def delete_invoice(
     invoice_id: int,
     service: InvoiceService = Depends(get_invoice_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Delete an invoice. 🔒 Requires authentication.
@@ -159,8 +159,7 @@ async def delete_invoice(
     success = await service.delete_invoice(invoice_id)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invoice not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found"
         )
     return None
 
@@ -169,7 +168,7 @@ async def delete_invoice(
 async def get_invoice_paid_amount(
     invoice_id: int,
     service: InvoiceService = Depends(get_invoice_service),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get the total paid amount for an invoice. 🔒 Requires authentication.
@@ -187,10 +186,6 @@ async def get_invoice_paid_amount(
     paid_amount = await service.get_paid_amount(invoice_id)
     if paid_amount is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invoice not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found"
         )
-    return {
-        "invoice_id": invoice_id,
-        "paid_amount": paid_amount
-    }
+    return {"invoice_id": invoice_id, "paid_amount": paid_amount}

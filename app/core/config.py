@@ -1,12 +1,15 @@
 """Application configuration"""
-from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from functools import lru_cache
 from typing import List
+
 from pydantic import model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings"""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,
@@ -29,7 +32,7 @@ class Settings(BaseSettings):
     # Constructed DATABASE_URL (built from components above)
     DATABASE_URL: str = ""
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def build_database_url(self):
         """Construct DATABASE_URL from individual components"""
         if not self.DATABASE_URL:

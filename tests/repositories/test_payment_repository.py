@@ -3,24 +3,32 @@ Unit tests for PaymentRepository
 
 Tests CRUD operations and payment validation for payments.
 """
+
+from datetime import date
+from decimal import Decimal
+
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from decimal import Decimal
-from datetime import date
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 
 from app.core.database import Base
-from app.db.models import School, Student, Invoice, Payment, InvoiceStatus, PaymentMethod
-from app.repositories.school_repository import SchoolRepository
-from app.repositories.student_repository import StudentRepository
+from app.core.exceptions import InvalidDataException
+from app.db.models import (Invoice, InvoiceStatus, Payment, PaymentMethod,
+                           School, Student)
 from app.repositories.invoice_repository import InvoiceRepository
 from app.repositories.payment_repository import PaymentRepository
-from app.core.exceptions import InvalidDataException
+from app.repositories.school_repository import SchoolRepository
+from app.repositories.student_repository import StudentRepository
 
 # Test database
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test_payment_repository.db"
-engine = create_async_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+engine = create_async_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
+TestingSessionLocal = async_sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
@@ -51,11 +59,7 @@ async def school(db_session):
 async def student(db_session, school):
     """Create a test student"""
     repo = StudentRepository(db_session)
-    return await repo.create(
-        school_id=school.id,
-        first_name="John",
-        last_name="Doe"
-    )
+    return await repo.create(school_id=school.id, first_name="John", last_name="Doe")
 
 
 @pytest_asyncio.fixture
@@ -66,7 +70,7 @@ async def invoice(db_session, student):
         student_id=student.id,
         amount=Decimal("100.00"),
         due_date=date(2024, 12, 31),
-        issue_date=date(2024, 1, 1)
+        issue_date=date(2024, 1, 1),
     )
 
 
@@ -82,7 +86,7 @@ class TestPaymentRepositoryCRUD:
             amount=Decimal("50.00"),
             payment_date=date(2024, 1, 15),
             payment_method=PaymentMethod.CASH,
-            reference="REF-12345"
+            reference="REF-12345",
         )
 
         assert payment is not None
@@ -100,7 +104,7 @@ class TestPaymentRepositoryCRUD:
         payment = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("50.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         assert payment is not None
@@ -111,7 +115,9 @@ class TestPaymentRepositoryCRUD:
         assert payment.reference is None
 
     @pytest.mark.asyncio
-    async def test_create_payment_updates_invoice_status_to_paid(self, db_session, invoice):
+    async def test_create_payment_updates_invoice_status_to_paid(
+        self, db_session, invoice
+    ):
         """Test that creating full payment updates invoice status to PAID"""
         repo = PaymentRepository(db_session)
         invoice_repo = InvoiceRepository(db_session)
@@ -123,7 +129,7 @@ class TestPaymentRepositoryCRUD:
         payment = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("100.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         # Refresh invoice and check status
@@ -131,7 +137,9 @@ class TestPaymentRepositoryCRUD:
         assert invoice.status == InvoiceStatus.PAID
 
     @pytest.mark.asyncio
-    async def test_create_partial_payment_keeps_invoice_pending(self, db_session, invoice):
+    async def test_create_partial_payment_keeps_invoice_pending(
+        self, db_session, invoice
+    ):
         """Test that creating partial payment keeps invoice as PENDING"""
         repo = PaymentRepository(db_session)
 
@@ -139,7 +147,7 @@ class TestPaymentRepositoryCRUD:
         payment = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         # Refresh invoice and check status
@@ -147,7 +155,9 @@ class TestPaymentRepositoryCRUD:
         assert invoice.status == InvoiceStatus.PENDING
 
     @pytest.mark.asyncio
-    async def test_create_payment_with_different_payment_methods(self, db_session, student):
+    async def test_create_payment_with_different_payment_methods(
+        self, db_session, student
+    ):
         """Test creating payments with different payment methods"""
         invoice_repo = InvoiceRepository(db_session)
         payment_repo = PaymentRepository(db_session)
@@ -157,19 +167,19 @@ class TestPaymentRepositoryCRUD:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         invoice2 = await invoice_repo.create(
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         invoice3 = await invoice_repo.create(
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # Create payments with different methods
@@ -177,19 +187,19 @@ class TestPaymentRepositoryCRUD:
             invoice_id=invoice1.id,
             amount=Decimal("50.00"),
             payment_date=date(2024, 1, 15),
-            payment_method=PaymentMethod.CASH
+            payment_method=PaymentMethod.CASH,
         )
         payment2 = await payment_repo.create(
             invoice_id=invoice2.id,
             amount=Decimal("50.00"),
             payment_date=date(2024, 1, 15),
-            payment_method=PaymentMethod.CARD
+            payment_method=PaymentMethod.CARD,
         )
         payment3 = await payment_repo.create(
             invoice_id=invoice3.id,
             amount=Decimal("50.00"),
             payment_date=date(2024, 1, 15),
-            payment_method=PaymentMethod.TRANSFER
+            payment_method=PaymentMethod.TRANSFER,
         )
 
         assert payment1.payment_method == PaymentMethod.CASH
@@ -203,7 +213,7 @@ class TestPaymentRepositoryCRUD:
         created_payment = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("50.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         retrieved_payment = await repo.get(created_payment.id)
@@ -228,17 +238,17 @@ class TestPaymentRepositoryCRUD:
         await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
         await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("40.00"),
-            payment_date=date(2024, 1, 20)
+            payment_date=date(2024, 1, 20),
         )
         await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 25)
+            payment_date=date(2024, 1, 25),
         )
 
         payments = await repo.get_all()
@@ -259,30 +269,30 @@ class TestPaymentRepositoryCRUD:
             student_id=student.id,
             amount=Decimal("100.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
         invoice2 = await invoice_repo.create(
             student_id=student.id,
             amount=Decimal("200.00"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # Create payments for both invoices
         await payment_repo.create(
             invoice_id=invoice1.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
         await payment_repo.create(
             invoice_id=invoice1.id,
             amount=Decimal("40.00"),
-            payment_date=date(2024, 1, 20)
+            payment_date=date(2024, 1, 20),
         )
         await payment_repo.create(
             invoice_id=invoice2.id,
             amount=Decimal("50.00"),
-            payment_date=date(2024, 1, 25)
+            payment_date=date(2024, 1, 25),
         )
 
         # Get payments for invoice1 only
@@ -302,7 +312,7 @@ class TestPaymentRepositoryCRUD:
             await repo.create(
                 invoice_id=invoice.id,
                 amount=Decimal("10.00"),
-                payment_date=date(2024, 1, 15 + i)
+                payment_date=date(2024, 1, 15 + i),
             )
 
         # Get first 2 payments
@@ -325,7 +335,7 @@ class TestPaymentRepositoryCRUD:
             invoice_id=invoice.id,
             amount=Decimal("50.00"),
             payment_date=date(2024, 1, 15),
-            payment_method=PaymentMethod.CASH
+            payment_method=PaymentMethod.CASH,
         )
 
         updated_payment = await repo.update(
@@ -333,7 +343,7 @@ class TestPaymentRepositoryCRUD:
             amount=Decimal("60.00"),
             payment_date=date(2024, 1, 20),
             payment_method=PaymentMethod.CARD,
-            reference="NEW-REF"
+            reference="NEW-REF",
         )
 
         assert updated_payment is not None
@@ -351,7 +361,7 @@ class TestPaymentRepositoryCRUD:
             invoice_id=invoice.id,
             amount=Decimal("50.00"),
             payment_date=date(2024, 1, 15),
-            payment_method=PaymentMethod.CASH
+            payment_method=PaymentMethod.CASH,
         )
 
         updated_payment = await repo.update(payment.id, reference="REF-123")
@@ -374,7 +384,7 @@ class TestPaymentRepositoryCRUD:
         payment = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("50.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         result = await repo.delete(payment.id)
@@ -396,13 +406,13 @@ class TestPaymentValidation:
     """Tests for payment validation logic"""
 
     @pytest.mark.asyncio
-    async def test_create_payment_for_nonexistent_invoice_returns_none(self, db_session):
+    async def test_create_payment_for_nonexistent_invoice_returns_none(
+        self, db_session
+    ):
         """Test that creating payment for non-existent invoice returns None"""
         repo = PaymentRepository(db_session)
         payment = await repo.create(
-            invoice_id=999,
-            amount=Decimal("50.00"),
-            payment_date=date(2024, 1, 15)
+            invoice_id=999, amount=Decimal("50.00"), payment_date=date(2024, 1, 15)
         )
         assert payment is None
 
@@ -413,7 +423,7 @@ class TestPaymentValidation:
         payment = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("50.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
         assert payment is not None
         assert payment.amount == Decimal("50.00")
@@ -425,13 +435,15 @@ class TestPaymentValidation:
         payment = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("100.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
         assert payment is not None
         assert payment.amount == Decimal("100.00")
 
     @pytest.mark.asyncio
-    async def test_create_payment_within_remaining_balance_succeeds(self, db_session, invoice):
+    async def test_create_payment_within_remaining_balance_succeeds(
+        self, db_session, invoice
+    ):
         """Test creating payment within remaining balance after previous payments succeeds"""
         repo = PaymentRepository(db_session)
 
@@ -439,20 +451,22 @@ class TestPaymentValidation:
         await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("30.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         # Second payment within remaining balance (70)
         payment = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("50.00"),
-            payment_date=date(2024, 1, 20)
+            payment_date=date(2024, 1, 20),
         )
         assert payment is not None
         assert payment.amount == Decimal("50.00")
 
     @pytest.mark.asyncio
-    async def test_create_payment_equal_to_remaining_balance_succeeds(self, db_session, invoice):
+    async def test_create_payment_equal_to_remaining_balance_succeeds(
+        self, db_session, invoice
+    ):
         """Test creating payment equal to remaining balance succeeds"""
         repo = PaymentRepository(db_session)
 
@@ -460,14 +474,14 @@ class TestPaymentValidation:
         await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("40.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
 
         # Second payment equal to remaining balance (60)
         payment = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("60.00"),
-            payment_date=date(2024, 1, 20)
+            payment_date=date(2024, 1, 20),
         )
         assert payment is not None
 
@@ -476,7 +490,9 @@ class TestPaymentValidation:
         assert invoice.status == InvoiceStatus.PAID
 
     @pytest.mark.asyncio
-    async def test_create_multiple_partial_payments_completing_invoice(self, db_session, invoice):
+    async def test_create_multiple_partial_payments_completing_invoice(
+        self, db_session, invoice
+    ):
         """Test creating multiple partial payments that complete the invoice"""
         repo = PaymentRepository(db_session)
 
@@ -484,7 +500,7 @@ class TestPaymentValidation:
         payment1 = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("25.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
         assert payment1 is not None
 
@@ -492,7 +508,7 @@ class TestPaymentValidation:
         payment2 = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("25.00"),
-            payment_date=date(2024, 1, 20)
+            payment_date=date(2024, 1, 20),
         )
         assert payment2 is not None
 
@@ -500,7 +516,7 @@ class TestPaymentValidation:
         payment3 = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("25.00"),
-            payment_date=date(2024, 1, 25)
+            payment_date=date(2024, 1, 25),
         )
         assert payment3 is not None
 
@@ -508,7 +524,7 @@ class TestPaymentValidation:
         payment4 = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("25.00"),
-            payment_date=date(2024, 1, 30)
+            payment_date=date(2024, 1, 30),
         )
         assert payment4 is not None
 
@@ -526,14 +542,14 @@ class TestPaymentValidation:
             student_id=student.id,
             amount=Decimal("123.45"),
             due_date=date(2024, 12, 31),
-            issue_date=date(2024, 1, 1)
+            issue_date=date(2024, 1, 1),
         )
 
         # First payment with decimal
         payment1 = await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("50.25"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
         assert payment1.amount == Decimal("50.25")
 
@@ -541,7 +557,7 @@ class TestPaymentValidation:
         payment2 = await payment_repo.create(
             invoice_id=invoice.id,
             amount=Decimal("73.20"),
-            payment_date=date(2024, 1, 20)
+            payment_date=date(2024, 1, 20),
         )
         assert payment2.amount == Decimal("73.20")
 
@@ -562,7 +578,7 @@ class TestPaymentRollback:
             await repo.create(
                 invoice_id=invoice.id,
                 amount=Decimal("150.00"),
-                payment_date=date(2024, 1, 15)
+                payment_date=date(2024, 1, 15),
             )
         except InvalidDataException:
             pass
@@ -572,7 +588,9 @@ class TestPaymentRollback:
         assert len(all_payments) == 0
 
     @pytest.mark.asyncio
-    async def test_exceeding_payment_does_not_update_invoice_status(self, db_session, invoice):
+    async def test_exceeding_payment_does_not_update_invoice_status(
+        self, db_session, invoice
+    ):
         """Test that failed payment doesn't update invoice status"""
         repo = PaymentRepository(db_session)
 
@@ -580,7 +598,7 @@ class TestPaymentRollback:
             await repo.create(
                 invoice_id=invoice.id,
                 amount=Decimal("150.00"),
-                payment_date=date(2024, 1, 15)
+                payment_date=date(2024, 1, 15),
             )
         except InvalidDataException:
             pass
@@ -590,7 +608,9 @@ class TestPaymentRollback:
         assert invoice.status == InvoiceStatus.PENDING
 
     @pytest.mark.asyncio
-    async def test_partial_then_exceeding_payment_does_not_persist(self, db_session, invoice):
+    async def test_partial_then_exceeding_payment_does_not_persist(
+        self, db_session, invoice
+    ):
         """Test that exceeding payment after partial payment doesn't persist"""
         repo = PaymentRepository(db_session)
 
@@ -598,7 +618,7 @@ class TestPaymentRollback:
         payment1 = await repo.create(
             invoice_id=invoice.id,
             amount=Decimal("60.00"),
-            payment_date=date(2024, 1, 15)
+            payment_date=date(2024, 1, 15),
         )
         assert payment1 is not None
 
@@ -607,7 +627,7 @@ class TestPaymentRollback:
             await repo.create(
                 invoice_id=invoice.id,
                 amount=Decimal("50.00"),  # Would total 110, exceeds 100
-                payment_date=date(2024, 1, 20)
+                payment_date=date(2024, 1, 20),
             )
         except InvalidDataException:
             pass

@@ -4,20 +4,21 @@ Dependency injection for API routes.
 This module provides dependency functions that create and inject service instances
 with their required repositories into API route handlers.
 """
+
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.repositories.school_repository import SchoolRepository
-from app.repositories.student_repository import StudentRepository
 from app.repositories.invoice_repository import InvoiceRepository
 from app.repositories.payment_repository import PaymentRepository
+from app.repositories.school_repository import SchoolRepository
+from app.repositories.student_repository import StudentRepository
 from app.repositories.user_repository import UserRepository
-from app.services.school_service import SchoolService
-from app.services.student_service import StudentService
+from app.services.auth_service import AuthService
 from app.services.invoice_service import InvoiceService
 from app.services.payment_service import PaymentService
-from app.services.auth_service import AuthService
+from app.services.school_service import SchoolService
+from app.services.student_service import StudentService
 
 
 # School Service Dependency

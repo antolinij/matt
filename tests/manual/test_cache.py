@@ -6,6 +6,7 @@ Simple script to demonstrate and test Redis caching functionality.
 """
 import asyncio
 import time
+
 from app.core.cache import cache_service
 
 
@@ -19,11 +20,7 @@ async def test_basic_operations():
     print("\n1. Testing SET and GET operations")
     print("-" * 60)
 
-    test_data = {
-        "id": 1,
-        "name": "Test School",
-        "email": "test@school.com"
-    }
+    test_data = {"id": 1, "name": "Test School", "email": "test@school.com"}
 
     print(f"   Setting cache: test:key = {test_data}")
     await cache_service.set("test:key", test_data, ttl=10)
@@ -147,7 +144,9 @@ async def test_decorator():
     elapsed2 = (time.time() - start) * 1000
     print(f"   ✓ Time: {elapsed2:.2f}ms, Function calls: {call_count['count']}")
     print(f"   ✓ Cache prevented {1} unnecessary function call!")
-    print(f"   ✓ Performance: {elapsed1:.2f}ms → {elapsed2:.2f}ms ({elapsed1/max(elapsed2, 0.1):.0f}x faster)")
+    print(
+        f"   ✓ Performance: {elapsed1:.2f}ms → {elapsed2:.2f}ms ({elapsed1/max(elapsed2, 0.1):.0f}x faster)"
+    )
 
     # Cleanup
     await cache_service.delete_pattern("decorated:*")

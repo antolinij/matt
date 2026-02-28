@@ -4,11 +4,14 @@ Redis Cache Service
 Provides caching functionality using Redis for improved performance
 on read-heavy endpoints.
 """
-import json
+
 import hashlib
-from typing import Optional, Any, Callable
+import json
 from functools import wraps
+from typing import Any, Callable, Optional
+
 import redis.asyncio as redis
+
 from app.core.config import settings
 
 
@@ -24,7 +27,7 @@ class CacheService:
             self._redis = await redis.from_url(
                 f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}",
                 encoding="utf-8",
-                decode_responses=True
+                decode_responses=True,
             )
         return self._redis
 
@@ -50,10 +53,7 @@ class CacheService:
             return None
 
     async def set(
-        self,
-        key: str,
-        value: Any,
-        ttl: int = 300  # 5 minutes default
+        self, key: str, value: Any, ttl: int = 300  # 5 minutes default
     ) -> bool:
         """
         Set value in cache with TTL
@@ -173,11 +173,7 @@ def generate_cache_key(*args, **kwargs) -> str:
     return hashlib.md5(key_string.encode()).hexdigest()
 
 
-def cached(
-    prefix: str,
-    ttl: int = 300,
-    key_builder: Optional[Callable] = None
-):
+def cached(prefix: str, ttl: int = 300, key_builder: Optional[Callable] = None):
     """
     Decorator for caching function results
 
@@ -194,6 +190,7 @@ def cached(
 
     Cache key format: {prefix}:{generated_hash}
     """
+
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -216,7 +213,9 @@ def cached(
                 await cache_service.set(cache_key, result, ttl=ttl)
 
             return result
+
         return wrapper
+
     return decorator
 
 

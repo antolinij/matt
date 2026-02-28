@@ -3,34 +3,28 @@ Mattilda School Management API
 
 FastAPI application for managing schools, students, invoices, and payments.
 """
+
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
-from contextlib import asynccontextmanager
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
-from app.core.config import settings
-from app.core.database import engine, Base
+from app.api.routes import (auth_router, invoices_router, payments_router,
+                            schools_router, students_router)
 from app.core.cache import cache_service
-from app.api.routes import schools_router, students_router, invoices_router, payments_router, auth_router
+from app.core.config import settings
+from app.core.database import Base, engine
+from app.core.exceptions import (DatabaseConnectionException,
+                                 DatabaseOperationException,
+                                 DuplicateRecordException,
+                                 ForeignKeyViolationException,
+                                 InvalidDataException, RecordNotFoundException,
+                                 RepositoryException)
+from app.core.metrics import (observe_attempt, observe_error, observe_failure,
+                              observe_request, observe_success, request_timer)
 from app.services.event_service import event_service
-from app.core.metrics import (
-    observe_attempt,
-    observe_error,
-    observe_failure,
-    observe_request,
-    observe_success,
-    request_timer,
-)
-from app.core.exceptions import (
-    RepositoryException,
-    DuplicateRecordException,
-    RecordNotFoundException,
-    DatabaseConnectionException,
-    ForeignKeyViolationException,
-    InvalidDataException,
-    DatabaseOperationException,
-)
 
 
 @asynccontextmanager
@@ -146,7 +140,9 @@ async def collect_http_metrics(request: Request, call_next):
 
 # Global Exception Handlers
 @app.exception_handler(DuplicateRecordException)
-async def duplicate_record_exception_handler(request: Request, exc: DuplicateRecordException):
+async def duplicate_record_exception_handler(
+    request: Request, exc: DuplicateRecordException
+):
     """Handle duplicate record exceptions (409 Conflict)"""
     observe_error(request, 409, type(exc).__name__)
     return JSONResponse(
@@ -161,7 +157,9 @@ async def duplicate_record_exception_handler(request: Request, exc: DuplicateRec
 
 
 @app.exception_handler(RecordNotFoundException)
-async def record_not_found_exception_handler(request: Request, exc: RecordNotFoundException):
+async def record_not_found_exception_handler(
+    request: Request, exc: RecordNotFoundException
+):
     """Handle record not found exceptions (404 Not Found)"""
     observe_error(request, 404, type(exc).__name__)
     return JSONResponse(
@@ -176,7 +174,9 @@ async def record_not_found_exception_handler(request: Request, exc: RecordNotFou
 
 
 @app.exception_handler(ForeignKeyViolationException)
-async def foreign_key_violation_exception_handler(request: Request, exc: ForeignKeyViolationException):
+async def foreign_key_violation_exception_handler(
+    request: Request, exc: ForeignKeyViolationException
+):
     """Handle foreign key violation exceptions (400 Bad Request)"""
     observe_error(request, 400, type(exc).__name__)
     return JSONResponse(
@@ -206,7 +206,9 @@ async def invalid_data_exception_handler(request: Request, exc: InvalidDataExcep
 
 
 @app.exception_handler(DatabaseConnectionException)
-async def database_connection_exception_handler(request: Request, exc: DatabaseConnectionException):
+async def database_connection_exception_handler(
+    request: Request, exc: DatabaseConnectionException
+):
     """Handle database connection exceptions (503 Service Unavailable)"""
     observe_error(request, 503, type(exc).__name__)
     return JSONResponse(
@@ -220,7 +222,9 @@ async def database_connection_exception_handler(request: Request, exc: DatabaseC
 
 
 @app.exception_handler(DatabaseOperationException)
-async def database_operation_exception_handler(request: Request, exc: DatabaseOperationException):
+async def database_operation_exception_handler(
+    request: Request, exc: DatabaseOperationException
+):
     """Handle database operation exceptions (500 Internal Server Error)"""
     observe_error(request, 500, type(exc).__name__)
     return JSONResponse(

@@ -1,10 +1,13 @@
 """Database configuration and session management"""
+
 import sqlite3
 
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 from sqlalchemy.ext.declarative import declarative_base
+
 from .config import settings
 
 
@@ -15,6 +18,7 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
+
 
 # Convert postgresql:// to postgresql+asyncpg:// for async support
 DATABASE_URL = settings.DATABASE_URL

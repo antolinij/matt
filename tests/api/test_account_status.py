@@ -1,13 +1,16 @@
-import pytest
 from datetime import date
 from decimal import Decimal
+
+import pytest
 
 
 @pytest.mark.asyncio
 async def test_student_account_status(authenticated_client):
     """Test student account status calculation"""
     # Create school
-    school_response = await authenticated_client.post("/api/schools/", json={"name": "Test School"})
+    school_response = await authenticated_client.post(
+        "/api/schools/", json={"name": "Test School"}
+    )
     school_id = school_response.json()["id"]
 
     # Create student
@@ -17,8 +20,8 @@ async def test_student_account_status(authenticated_client):
             "school_id": school_id,
             "first_name": "Test",
             "last_name": "Student",
-            "status": "active"
-        }
+            "status": "active",
+        },
     )
     student_id = student_response.json()["id"]
 
@@ -30,8 +33,8 @@ async def test_student_account_status(authenticated_client):
             "amount": 5000.00,
             "issue_date": str(date.today()),
             "due_date": str(date.today()),
-            "description": "Invoice 1"
-        }
+            "description": "Invoice 1",
+        },
     )
     invoice1_id = invoice1.json()["id"]
 
@@ -42,8 +45,8 @@ async def test_student_account_status(authenticated_client):
             "amount": 3000.00,
             "issue_date": str(date.today()),
             "due_date": str(date.today()),
-            "description": "Invoice 2"
-        }
+            "description": "Invoice 2",
+        },
     )
 
     # Create payment
@@ -53,12 +56,14 @@ async def test_student_account_status(authenticated_client):
             "invoice_id": invoice1_id,
             "amount": 2500.00,
             "payment_date": str(date.today()),
-            "payment_method": "cash"
-        }
+            "payment_method": "cash",
+        },
     )
 
     # Get account status
-    response = await authenticated_client.get(f"/api/students/{student_id}/account-status")
+    response = await authenticated_client.get(
+        f"/api/students/{student_id}/account-status"
+    )
     assert response.status_code == 200
 
     data = response.json()
@@ -73,7 +78,9 @@ async def test_student_account_status(authenticated_client):
 async def test_school_account_status(authenticated_client):
     """Test school account status calculation"""
     # Create school
-    school_response = await authenticated_client.post("/api/schools/", json={"name": "Status Test School"})
+    school_response = await authenticated_client.post(
+        "/api/schools/", json={"name": "Status Test School"}
+    )
     school_id = school_response.json()["id"]
 
     # Create students
@@ -83,8 +90,8 @@ async def test_school_account_status(authenticated_client):
             "school_id": school_id,
             "first_name": "Student",
             "last_name": "One",
-            "status": "active"
-        }
+            "status": "active",
+        },
     )
     student1_id = student1.json()["id"]
 
@@ -94,8 +101,8 @@ async def test_school_account_status(authenticated_client):
             "school_id": school_id,
             "first_name": "Student",
             "last_name": "Two",
-            "status": "active"
-        }
+            "status": "active",
+        },
     )
     student2_id = student2.json()["id"]
 
@@ -107,8 +114,8 @@ async def test_school_account_status(authenticated_client):
             "amount": 4000.00,
             "issue_date": str(date.today()),
             "due_date": str(date.today()),
-            "description": "Student 1 Invoice"
-        }
+            "description": "Student 1 Invoice",
+        },
     )
 
     invoice2 = await authenticated_client.post(
@@ -118,8 +125,8 @@ async def test_school_account_status(authenticated_client):
             "amount": 6000.00,
             "issue_date": str(date.today()),
             "due_date": str(date.today()),
-            "description": "Student 2 Invoice"
-        }
+            "description": "Student 2 Invoice",
+        },
     )
     invoice2_id = invoice2.json()["id"]
 
@@ -130,12 +137,14 @@ async def test_school_account_status(authenticated_client):
             "invoice_id": invoice2_id,
             "amount": 6000.00,
             "payment_date": str(date.today()),
-            "payment_method": "transfer"
-        }
+            "payment_method": "transfer",
+        },
     )
 
     # Get school account status
-    response = await authenticated_client.get(f"/api/schools/{school_id}/account-status")
+    response = await authenticated_client.get(
+        f"/api/schools/{school_id}/account-status"
+    )
     assert response.status_code == 200
 
     data = response.json()
@@ -151,7 +160,9 @@ async def test_school_account_status(authenticated_client):
 async def test_payment_validation(authenticated_client):
     """Test that payments can't exceed invoice balance"""
     # Create school
-    school_response = await authenticated_client.post("/api/schools/", json={"name": "Payment Test School"})
+    school_response = await authenticated_client.post(
+        "/api/schools/", json={"name": "Payment Test School"}
+    )
     school_id = school_response.json()["id"]
 
     # Create student
@@ -161,8 +172,8 @@ async def test_payment_validation(authenticated_client):
             "school_id": school_id,
             "first_name": "Payment",
             "last_name": "Test",
-            "status": "active"
-        }
+            "status": "active",
+        },
     )
     student_id = student_response.json()["id"]
 
@@ -174,8 +185,8 @@ async def test_payment_validation(authenticated_client):
             "amount": 1000.00,
             "issue_date": str(date.today()),
             "due_date": str(date.today()),
-            "description": "Test Invoice"
-        }
+            "description": "Test Invoice",
+        },
     )
     invoice_id = invoice_response.json()["id"]
 
@@ -186,7 +197,7 @@ async def test_payment_validation(authenticated_client):
             "invoice_id": invoice_id,
             "amount": 1500.00,
             "payment_date": str(date.today()),
-            "payment_method": "cash"
-        }
+            "payment_method": "cash",
+        },
     )
     assert payment_response.status_code == 422

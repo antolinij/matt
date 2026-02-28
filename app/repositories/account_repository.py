@@ -1,18 +1,15 @@
 """Account repository for historical queries"""
-from typing import List, Optional
+
 from datetime import date, datetime
 from decimal import Decimal
-from sqlalchemy import select, and_, func
+from typing import List, Optional
+
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import (
-    AccountMovement,
-    AccountSnapshot,
-    MovementType,
-    MovementEntityType,
-    SnapshotType,
-    SnapshotEntityType,
-)
+from app.db.models import (AccountMovement, AccountSnapshot,
+                           MovementEntityType, MovementType,
+                           SnapshotEntityType, SnapshotType)
 
 
 class AccountRepository:
@@ -28,7 +25,7 @@ class AccountRepository:
         entity_type: MovementEntityType,
         entity_id: int,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[AccountMovement]:
         """
         Get all movements for a specific entity (school or student).
@@ -47,7 +44,7 @@ class AccountRepository:
             .where(
                 and_(
                     AccountMovement.entity_type == entity_type,
-                    AccountMovement.entity_id == entity_id
+                    AccountMovement.entity_id == entity_id,
                 )
             )
             .order_by(AccountMovement.created_at.desc())
@@ -62,7 +59,7 @@ class AccountRepository:
         entity_type: MovementEntityType,
         entity_id: int,
         start_date: datetime,
-        end_date: datetime
+        end_date: datetime,
     ) -> List[AccountMovement]:
         """
         Get movements for an entity within a date range.
@@ -83,7 +80,7 @@ class AccountRepository:
                     AccountMovement.entity_type == entity_type,
                     AccountMovement.entity_id == entity_id,
                     AccountMovement.created_at >= start_date,
-                    AccountMovement.created_at <= end_date
+                    AccountMovement.created_at <= end_date,
                 )
             )
             .order_by(AccountMovement.created_at)
@@ -97,7 +94,7 @@ class AccountRepository:
         entity_id: int,
         movement_type: MovementType,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[AccountMovement]:
         """
         Get movements of a specific type for an entity.
@@ -118,7 +115,7 @@ class AccountRepository:
                 and_(
                     AccountMovement.entity_type == entity_type,
                     AccountMovement.entity_id == entity_id,
-                    AccountMovement.movement_type == movement_type
+                    AccountMovement.movement_type == movement_type,
                 )
             )
             .order_by(AccountMovement.created_at.desc())
@@ -133,7 +130,7 @@ class AccountRepository:
         entity_type: MovementEntityType,
         entity_id: int,
         start_date: datetime,
-        end_date: datetime
+        end_date: datetime,
     ) -> dict:
         """
         Calculate aggregated totals for an entity during a period.
@@ -152,11 +149,14 @@ class AccountRepository:
             entity_type, entity_id, start_date, end_date
         )
 
-        total_invoiced = Decimal('0.00')
-        total_paid = Decimal('0.00')
+        total_invoiced = Decimal("0.00")
+        total_paid = Decimal("0.00")
 
         for movement in movements:
-            if movement.movement_type in [MovementType.INVOICE_CREATED, MovementType.INVOICE_UPDATED]:
+            if movement.movement_type in [
+                MovementType.INVOICE_CREATED,
+                MovementType.INVOICE_UPDATED,
+            ]:
                 total_invoiced += movement.delta
             elif movement.movement_type == MovementType.PAYMENT_RECEIVED:
                 total_paid += movement.delta
@@ -165,7 +165,7 @@ class AccountRepository:
             "total_invoiced": total_invoiced,
             "total_paid": total_paid,
             "net_change": total_invoiced - total_paid,
-            "movement_count": len(movements)
+            "movement_count": len(movements),
         }
 
     # ==================== Snapshot Queries ====================
@@ -175,7 +175,7 @@ class AccountRepository:
         entity_type: SnapshotEntityType,
         entity_id: int,
         target_date: date,
-        snapshot_type: SnapshotType = SnapshotType.DAILY
+        snapshot_type: SnapshotType = SnapshotType.DAILY,
     ) -> Optional[AccountSnapshot]:
         """
         Get snapshot for a specific date (or closest available before that date).
@@ -196,7 +196,7 @@ class AccountRepository:
                     AccountSnapshot.entity_type == entity_type,
                     AccountSnapshot.entity_id == entity_id,
                     AccountSnapshot.snapshot_type == snapshot_type,
-                    AccountSnapshot.snapshot_date <= target_date
+                    AccountSnapshot.snapshot_date <= target_date,
                 )
             )
             .order_by(AccountSnapshot.snapshot_date.desc())
@@ -211,7 +211,7 @@ class AccountRepository:
         entity_id: int,
         start_date: date,
         end_date: date,
-        snapshot_type: SnapshotType = SnapshotType.DAILY
+        snapshot_type: SnapshotType = SnapshotType.DAILY,
     ) -> List[AccountSnapshot]:
         """
         Get all snapshots for an entity within a date range.
@@ -234,7 +234,7 @@ class AccountRepository:
                     AccountSnapshot.entity_id == entity_id,
                     AccountSnapshot.snapshot_type == snapshot_type,
                     AccountSnapshot.snapshot_date >= start_date,
-                    AccountSnapshot.snapshot_date <= end_date
+                    AccountSnapshot.snapshot_date <= end_date,
                 )
             )
             .order_by(AccountSnapshot.snapshot_date)
@@ -250,9 +250,9 @@ class AccountRepository:
         snapshot_type: SnapshotType,
         total_students: Optional[int] = None,
         active_students: Optional[int] = None,
-        total_invoiced: Decimal = Decimal('0.00'),
-        total_paid: Decimal = Decimal('0.00'),
-        total_pending: Decimal = Decimal('0.00')
+        total_invoiced: Decimal = Decimal("0.00"),
+        total_paid: Decimal = Decimal("0.00"),
+        total_pending: Decimal = Decimal("0.00"),
     ) -> AccountSnapshot:
         """
         Create a new snapshot.
@@ -280,7 +280,7 @@ class AccountRepository:
             active_students=active_students,
             total_invoiced=total_invoiced,
             total_paid=total_paid,
-            total_pending=total_pending
+            total_pending=total_pending,
         )
         self.db.add(snapshot)
         await self.db.commit()
@@ -290,10 +290,7 @@ class AccountRepository:
     # ==================== Advanced Queries ====================
 
     async def get_account_status_at_date(
-        self,
-        entity_type: MovementEntityType,
-        entity_id: int,
-        target_date: datetime
+        self, entity_type: MovementEntityType, entity_id: int, target_date: datetime
     ) -> dict:
         """
         Calculate account status at a specific point in time.
@@ -316,9 +313,7 @@ class AccountRepository:
 
         # Try to get closest snapshot
         snapshot = await self.get_snapshot_at_date(
-            SnapshotEntityType(entity_type.value),
-            entity_id,
-            target_date_only
+            SnapshotEntityType(entity_type.value), entity_id, target_date_only
         )
 
         if snapshot:
@@ -329,9 +324,9 @@ class AccountRepository:
             start_date = datetime.combine(snapshot.snapshot_date, datetime.min.time())
         else:
             # No snapshot, start from zero
-            total_invoiced = Decimal('0.00')
-            total_paid = Decimal('0.00')
-            total_pending = Decimal('0.00')
+            total_invoiced = Decimal("0.00")
+            total_paid = Decimal("0.00")
+            total_pending = Decimal("0.00")
             start_date = datetime.min
 
         # Get movements from snapshot/start to target date
@@ -355,5 +350,5 @@ class AccountRepository:
             "total_pending": total_pending,
             "calculated_at": target_date,
             "used_snapshot": snapshot is not None,
-            "snapshot_date": snapshot.snapshot_date if snapshot else None
+            "snapshot_date": snapshot.snapshot_date if snapshot else None,
         }

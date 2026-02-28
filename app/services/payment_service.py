@@ -1,8 +1,10 @@
 """Payment service for business logic"""
-from typing import List, Optional
+
 from decimal import Decimal
-from app.repositories.payment_repository import PaymentRepository
+from typing import List, Optional
+
 from app.repositories.invoice_repository import InvoiceRepository
+from app.repositories.payment_repository import PaymentRepository
 from app.repositories.student_repository import StudentRepository
 from app.schemas import Payment, PaymentCreate, PaymentUpdate
 from app.services.event_service import event_service
@@ -15,7 +17,7 @@ class PaymentService:
         self,
         repository: PaymentRepository,
         invoice_repository: InvoiceRepository,
-        student_repository: StudentRepository
+        student_repository: StudentRepository,
     ):
         self.repository = repository
         self.invoice_repository = invoice_repository
@@ -51,7 +53,7 @@ class PaymentService:
                 amount=schema.amount,
                 payment_date=schema.payment_date,
                 payment_method=schema.payment_method,
-                reference=schema.reference
+                reference=schema.reference,
             )
             if not db_payment:
                 return None
@@ -66,7 +68,7 @@ class PaymentService:
                     student_id=student.id,
                     school_id=student.school_id,
                     amount=float(schema.amount),
-                    user_id=None  # TODO: Add when auth is integrated
+                    user_id=None,  # TODO: Add when auth is integrated
                 )
 
             return Payment.model_validate(db_payment)
@@ -90,10 +92,7 @@ class PaymentService:
         return Payment.model_validate(db_payment)
 
     async def get_all_payments(
-        self,
-        skip: int = 0,
-        limit: int = 100,
-        invoice_id: Optional[int] = None
+        self, skip: int = 0, limit: int = 100, invoice_id: Optional[int] = None
     ) -> List[Payment]:
         """
         Get all payments with pagination and optional invoice filter
@@ -107,13 +106,13 @@ class PaymentService:
             List of Payment schemas
         """
         db_payments = await self.repository.get_all(
-            skip=skip,
-            limit=limit,
-            invoice_id=invoice_id
+            skip=skip, limit=limit, invoice_id=invoice_id
         )
         return [Payment.model_validate(payment) for payment in db_payments]
 
-    async def update_payment(self, payment_id: int, schema: PaymentUpdate) -> Optional[Payment]:
+    async def update_payment(
+        self, payment_id: int, schema: PaymentUpdate
+    ) -> Optional[Payment]:
         """
         Update a payment
 
@@ -141,7 +140,7 @@ class PaymentService:
             return None
 
         # If amount was updated, recalculate invoice status
-        if 'amount' in update_data:
+        if "amount" in update_data:
             await self.invoice_repository.update_status_based_on_payments(
                 existing_payment.invoice_id
             )
