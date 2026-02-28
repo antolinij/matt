@@ -789,7 +789,9 @@ make test        # Run all tests
 make test-cov    # Run tests with coverage report
 
 # Code quality
+make install-dev
 make format      # Format code with black & isort
+make format-webapp      # Format web code
 make lint        # Lint code with flake8 & mypy
 make check       # Run format + lint + test
 
